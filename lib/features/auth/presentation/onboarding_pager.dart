@@ -22,6 +22,7 @@ class _OnboardingPagerState extends State<OnboardingPager> {
     'Tingkatkan Peluang Lolos\nSeleksi Rekrutmen Kerja',
     'Catat Kegiatan Pendukung\nCapaian Karir Digital',
   ];
+
   final _subtitles = const [
     'Rencanakan tujuan karir kamu dengan lebih jelas dan terarah menggunakan teknologi AI dari REXTRA yang terpersonalisasi.',
     'Persiapkan CV terbaik, latihan interview, dan mentoring dari para expert untuk meningkatkan peluang lolos seleksi.',
@@ -49,6 +50,7 @@ class _OnboardingPagerState extends State<OnboardingPager> {
             itemBuilder: (_, i) {
               return Column(
                 children: [
+                  // Bagian gambar atas
                   SizedBox(
                     height: topHeight,
                     width: double.infinity,
@@ -61,6 +63,7 @@ class _OnboardingPagerState extends State<OnboardingPager> {
                       ),
                     ),
                   ),
+                  // Panel putih bawah
                   Expanded(
                     child: Container(
                       width: double.infinity,
@@ -99,18 +102,15 @@ class _OnboardingPagerState extends State<OnboardingPager> {
                               const SizedBox(height: 18),
                               _Dots(current: _index, total: _images.length),
                               const Spacer(),
-                              // Tombol: langsung skip ke verifikasi
+                              // Arahkan ke LOGIN
                               ElevatedButton(
-                                onPressed: () {
-                                  context.go('/verify?mode=sent&email=test@rextra.com');
-                                },
+                                onPressed: () => context.push('/login'),
                                 child: const Text('Masuk Aplikasi'),
                               ),
                               const SizedBox(height: 10),
+                              // Arahkan ke REGISTER
                               FilledButton(
-                                onPressed: () {
-                                  context.go('/verify?mode=sent&email=test@rextra.com');
-                                },
+                                onPressed: () => context.push('/register'),
                                 child: const Text('Daftar Akun'),
                               ),
                             ],

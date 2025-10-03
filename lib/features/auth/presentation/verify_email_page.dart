@@ -81,8 +81,8 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
 
           // panel & tata letak
           final double panelH  = (w * 1.00).clamp(480.0, 570.0);
-          final double mascotW = panelH * 0.40;
-          final double textTop = panelH * 0.58; // sedikit lebih tinggi agar aman
+          final double mascotW = panelH * 0.46;   // maskot lebih besar
+          final double textTop = panelH * 0.62;   // teks sedikit lebih naik
 
           return SingleChildScrollView(
             child: Column(
@@ -98,15 +98,19 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
                       // ====== background awan (satu file full) ======
                       Positioned.fill(
                         child: Image.asset(
-                          'assets/images/cloud.png', // << semua diganti ke satu background
+                          'assets/images/bgawanawan.png',
                           fit: BoxFit.cover,
                         ),
                       ),
 
-                      // ====== maskot ======
+                      // ====== maskot (lebih tinggi posisinya) ======
                       Align(
-                        alignment: const Alignment(0, -0.45), // agak naik biar teks muat
-                        child: Image.asset(iconAsset, width: mascotW, fit: BoxFit.contain),
+                        alignment: const Alignment(-0.3, -0.50), // geser kiri dengan -0.3, naik sedikit
+                        child: Image.asset(
+                          iconAsset,
+                          width: mascotW * 1.2, // zoom in lebih besar
+                          fit: BoxFit.contain,
+                        ),
                       ),
 
                       // ====== teks ======
@@ -120,8 +124,8 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
                               title,
                               textAlign: TextAlign.center,
                               style: const TextStyle(
-                                fontSize: 32,
-                                fontWeight: FontWeight.w800,
+                                fontSize: 36, // <<< lebih besar
+                                fontWeight: FontWeight.w900,
                                 height: 1.2,
                                 color: Color(0xFF102542),
                               ),
@@ -131,7 +135,7 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
                               subtitle,
                               textAlign: TextAlign.center,
                               style: const TextStyle(
-                                fontSize: 15,
+                                fontSize: 15, // tetap
                                 fontWeight: FontWeight.w600,
                                 height: 1.5,
                                 color: Color(0xFF2E3A4C),
