@@ -38,92 +38,96 @@ class _OnboardingPagerState extends State<OnboardingPager> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final topHeight = size.height * 0.55;
 
     return Scaffold(
-      body: Stack(
-        children: [
-          PageView.builder(
-            controller: _controller,
-            itemCount: _images.length,
-            onPageChanged: (i) => setState(() => _index = i),
-            itemBuilder: (_, i) {
-              return Column(
-                children: [
-                  // Bagian gambar atas
-                  SizedBox(
-                    height: topHeight,
-                    width: double.infinity,
-                    child: SafeArea(
-                      bottom: false,
-                      child: Image.asset(
-                        _images[i],
-                        fit: BoxFit.cover,
-                        alignment: Alignment.topCenter,
-                      ),
-                    ),
-                  ),
-                  // Panel putih bawah
-                  Expanded(
-                    child: Container(
-                      width: double.infinity,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(36),
-                          topRight: Radius.circular(36),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Color(0x14000000),
-                            blurRadius: 16,
-                            offset: Offset(0, -6),
-                          ),
-                        ],
-                      ),
-                      child: SafeArea(
-                        top: false,
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(22, 22, 22, 16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(
-                                _titles[i],
-                                textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.headlineMedium,
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                _subtitles[i],
-                                textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
-                              const SizedBox(height: 18),
-                              _Dots(current: _index, total: _images.length),
-                              const Spacer(),
-                              // Arahkan ke LOGIN
-                              ElevatedButton(
-                                onPressed: () => context.push('/login'),
-                                child: const Text('Masuk Aplikasi'),
-                              ),
-                              const SizedBox(height: 10),
-                              // Arahkan ke REGISTER
-                              FilledButton(
-                                onPressed: () => context.push('/register'),
-                                child: const Text('Daftar Akun'),
-                              ),
-                            ],
-                          ),
+      backgroundColor: Colors.white,
+      body: PageView.builder(
+        controller: _controller,
+        itemCount: _images.length,
+        onPageChanged: (i) => setState(() => _index = i),
+        itemBuilder: (_, i) {
+          return Stack(
+            children: [
+              // ===== background putih full =====
+              Container(color: Colors.white),
+
+              // ===== gambar biru ditimpa di atas =====
+              Align(
+                alignment: Alignment.topCenter,
+                child: Image.asset(
+                  _images[i],
+                  fit: BoxFit.fitWidth,
+                  width: double.infinity,
+                ),
+              ),
+
+              // ===== panel konten (full putih, tanpa border radius) =====
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(22, 26, 22, 30),
+                  color: Colors
+                      .white, // full putih, gak pake borderRadius biar "nyambung" ke atas
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _titles[i],
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w900,
+                          height: 1.3,
+                          color: Color(0xFF2E6BFF), // biru
                         ),
                       ),
-                    ),
+                      const SizedBox(height: 12),
+                      Text(
+                        _subtitles[i],
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600, // bold tipis
+                          height: 1.5,
+                          color: Color(0xFF2E3A4C),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      _Dots(current: _index, total: _images.length),
+                      const SizedBox(height: 30),
+
+                      // Tombol Masuk
+                      ElevatedButton(
+                        onPressed: () => context.push('/login'),
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(52),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        child: const Text('Masuk Aplikasi'),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Tombol Daftar
+                      FilledButton(
+                        onPressed: () => context.push('/register'),
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size.fromHeight(52),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        child: const Text('Daftar Akun'),
+                      ),
+                    ],
                   ),
-                ],
-              );
-            },
-          ),
-        ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

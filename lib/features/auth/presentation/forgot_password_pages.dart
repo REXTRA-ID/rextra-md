@@ -18,7 +18,7 @@ class _CloudHeroPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
 
-    // Sama seperti VerifyEmailPage
+    // Samakan dengan VerifyEmailPage
     final double panelH  = (w * 1.00).clamp(480.0, 570.0);
     final double mascotW = panelH * 0.46;
     final double textTop = panelH * 0.62;
@@ -111,12 +111,14 @@ class _ForgotPasswordRequestPageState extends State<ForgotPasswordRequestPage> {
 
     setState(() => loading = true);
     try {
-      // TODO: panggil API request reset, misal POST /auth/forgot-password
+      // TODO: panggil API request reset, mis. POST /auth/forgot-password
       // await _auth.requestReset(emailC.text.trim());
 
       final q = Uri.encodeQueryComponent(emailC.text.trim());
+      if (!mounted) return;
       context.go('/forgot/sent?email=$q');
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Gagal mengirim tautan: $e')),
       );
@@ -151,7 +153,7 @@ class _ForgotPasswordRequestPageState extends State<ForgotPasswordRequestPage> {
               ),
               const SizedBox(height: 6),
               Text(
-                'Hi Sobat REXTRA! Masukkan email kamu, dan akan kirim tautan untuk atur ulang kata sandi.',
+                'Hi Sobat REXTRA! Masukkan email kamu, dan kami akan kirim tautan untuk atur ulang kata sandi.',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
@@ -162,7 +164,7 @@ class _ForgotPasswordRequestPageState extends State<ForgotPasswordRequestPage> {
                 controller: emailC,
                 validator: _emailValidator,
                 keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(hintText: 'Masukkan nama lengkap anda'), // sesuai desain
+                decoration: const InputDecoration(hintText: 'Masukkan alamat email kamu'),
               ),
               const SizedBox(height: 22),
               ElevatedButton(
@@ -203,7 +205,7 @@ class ForgotPasswordSentPage extends StatelessWidget {
             _CloudHeroPanel(
               mascotAsset: 'assets/images/rex51.png',
               title: 'Reset Password Terkirim',
-              subtitle: 'Kami telah mengirim tautan reset sandi ke $email. Periksa kotak masuk/spam dan klik dalam 24 jam sebelum kadaluarsa',
+              subtitle: 'Kami telah mengirim tautan reset sandi ke $email. Periksa kotak masuk/spam dan klik dalam 24 jam sebelum kadaluarsa.',
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 22, 20, 24),
@@ -220,7 +222,9 @@ class ForgotPasswordSentPage extends StatelessWidget {
                     onPressed: () async {
                       // TODO: call resend reset password endpoint
                       // await _auth.resendReset(email);
-                      // sementara tetap di halaman ini
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Tautan reset dikirim ulang (dummy)')),
+                      );
                     },
                     child: const Text('Kirim Ulang'),
                   ),
@@ -279,7 +283,6 @@ class ForgotPasswordExpiredPage extends StatelessWidget {
                   ElevatedButton(
                     onPressed: () async {
                       // TODO: kirim ulang reset untuk email terkait
-                      // await _auth.resendReset(email);
                       final q = Uri.encodeQueryComponent(email);
                       context.go('/forgot/sent?email=$q');
                     },
@@ -347,8 +350,10 @@ class _NewPasswordPageState extends State<NewPasswordPage> {
       // TODO: panggil API reset password pakai token
       // await _auth.resetPassword(token: widget.token, newPassword: passC.text);
 
+      if (!mounted) return;
       context.go('/forgot/success');
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Gagal mengganti password: $e')),
       );
@@ -374,12 +379,13 @@ class _NewPasswordPageState extends State<NewPasswordPage> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             children: [
-              Text('Buat Password Baru',
-                  textAlign: TextAlign.left,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),
+              Text(
+                'Buat Password Baru',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
+              ),
               const SizedBox(height: 6),
               Text(
-                'Hi Sobat REXTRA! Masukkan email kamu, dan akan kirim tautan untuk atur ulang kata sandi.',
+                'Masukkan kata sandi barumu di bawah ini.',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 22),

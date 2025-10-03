@@ -117,7 +117,7 @@ class _LoginPageState extends State<LoginPage> {
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
-                  onPressed: () {/* TODO: forgot password */},
+                  onPressed: () => context.go('/forgot'),
                   child: const Text('Lupa kata sandi?'),
                 ),
               ),

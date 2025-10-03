@@ -1,3 +1,4 @@
+// lib/router/app_router.dart
 import 'package:go_router/go_router.dart';
 import '../features/auth/presentation/forgot_password_pages.dart';
 import '../features/auth/presentation/splash_page.dart';
@@ -20,25 +21,30 @@ final router = GoRouter(
         mode: s.uri.queryParameters['mode'] ?? 'sent', // sent|resent|expired
       ),
     ),
+
+    // Forgot password flow
     GoRoute(
       path: '/forgot',
-      builder: (c, s) => const ForgotPasswordRequestPage(),
+      builder: (context, state) => const ForgotPasswordRequestPage(),
     ),
     GoRoute(
       path: '/forgot/sent',
-      builder: (c, s) => ForgotPasswordSentPage(email: s.uri.queryParameters['email'] ?? ''),
+      builder: (context, state) =>
+          ForgotPasswordSentPage(email: state.uri.queryParameters['email'] ?? ''),
     ),
     GoRoute(
       path: '/forgot/expired',
-      builder: (c, s) => ForgotPasswordExpiredPage(email: s.uri.queryParameters['email'] ?? ''),
+      builder: (context, state) =>
+          ForgotPasswordExpiredPage(email: state.uri.queryParameters['email'] ?? ''),
     ),
     GoRoute(
       path: '/forgot/new',
-      builder: (c, s) => NewPasswordPage(token: s.uri.queryParameters['token'] ?? ''),
+      builder: (context, state) =>
+          NewPasswordPage(token: state.uri.queryParameters['token'] ?? ''),
     ),
     GoRoute(
       path: '/forgot/success',
-      builder: (c, s) => const PasswordResetSuccessPage(),
+      builder: (context, state) => const PasswordResetSuccessPage(),
     ),
   ],
 );
