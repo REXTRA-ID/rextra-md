@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+import '../features/auth/presentation/forgot_password_pages.dart';
 import '../features/auth/presentation/splash_page.dart';
 import '../features/auth/presentation/onboarding_pager.dart';
 import '../features/auth/presentation/login_page.dart';
@@ -18,6 +19,26 @@ final router = GoRouter(
         email: s.uri.queryParameters['email'] ?? '',
         mode: s.uri.queryParameters['mode'] ?? 'sent', // sent|resent|expired
       ),
+    ),
+    GoRoute(
+      path: '/forgot',
+      builder: (c, s) => const ForgotPasswordRequestPage(),
+    ),
+    GoRoute(
+      path: '/forgot/sent',
+      builder: (c, s) => ForgotPasswordSentPage(email: s.uri.queryParameters['email'] ?? ''),
+    ),
+    GoRoute(
+      path: '/forgot/expired',
+      builder: (c, s) => ForgotPasswordExpiredPage(email: s.uri.queryParameters['email'] ?? ''),
+    ),
+    GoRoute(
+      path: '/forgot/new',
+      builder: (c, s) => NewPasswordPage(token: s.uri.queryParameters['token'] ?? ''),
+    ),
+    GoRoute(
+      path: '/forgot/success',
+      builder: (c, s) => const PasswordResetSuccessPage(),
     ),
   ],
 );
