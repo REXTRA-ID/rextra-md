@@ -95,51 +95,34 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
                   child: Stack(
                     clipBehavior: Clip.none,
                     children: [
-                      // rectangle zoom-in supaya gradasi panjang dan full-bleed
+                      // ====== background awan (satu file full) ======
                       Positioned.fill(
-                        child: Transform.scale(
-                          scale: 1.12, // << zoom-in
-                          child: Image.asset('assets/images/rectangle.png', fit: BoxFit.cover),
-                        ),
-                      ),
-
-                      // cloud1 – naik & agak ke kanan
-                      Positioned(
-                        left: -w * 0.10, // lebih kiri
-                        top: -panelH * 0.18, // lebih turun dibanding sebelumnya
                         child: Image.asset(
-                          'assets/images/cloud1.png',
-                          width: w * 0.82,
+                          'assets/images/cloud.png', // << semua diganti ke satu background
                           fit: BoxFit.cover,
                         ),
                       ),
 
-                      // cloud2 – lebih kecil & geser kanan
-                      Positioned(
-                        right: -w * 0.04,
-                        top: panelH * 0.3,
-                        child: Image.asset('assets/images/cloud2.png',
-                            width: w * 0.58, fit: BoxFit.cover),
-                      ),
-
-                      // maskot – dinaikkan agar tidak tumpang tindih dengan judul
+                      // ====== maskot ======
                       Align(
-                        alignment: const Alignment(0, -0.52),
-                        child: Image.asset(iconAsset, width: mascotW),
+                        alignment: const Alignment(0, -0.45), // agak naik biar teks muat
+                        child: Image.asset(iconAsset, width: mascotW, fit: BoxFit.contain),
                       ),
 
-                      // TEKS – di bawah maskot, center
+                      // ====== teks ======
                       Positioned(
-                        left: 20, right: 20, top: textTop,
+                        left: 20,
+                        right: 20,
+                        top: textTop,
                         child: Column(
                           children: [
                             Text(
                               title,
                               textAlign: TextAlign.center,
                               style: const TextStyle(
-                                fontSize: 40,
+                                fontSize: 32,
                                 fontWeight: FontWeight.w800,
-                                height: 1.18,
+                                height: 1.2,
                                 color: Color(0xFF102542),
                               ),
                             ),
@@ -149,7 +132,7 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 fontSize: 15,
-                                fontWeight: FontWeight.w600, // biar lebih jelas
+                                fontWeight: FontWeight.w600,
                                 height: 1.5,
                                 color: Color(0xFF2E3A4C),
                               ),
