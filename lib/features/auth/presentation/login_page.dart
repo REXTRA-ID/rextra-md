@@ -139,7 +139,20 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 12),
 
               FilledButton(
-                onPressed: loading ? null : () {/* TODO: Google sign-in */},
+                onPressed: loading ? null : () async {
+                  setState(() => loading = true);
+                  try {
+                    await _auth.loginWithGoogle();
+                    if (!mounted) return;
+                    context.go('/home');
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Login Google gagal: $e')),
+                    );
+                  } finally {
+                    if (mounted) setState(() => loading = false);
+                  }
+                },
                 child: const Text('Masuk dengan Google'),
               ),
 

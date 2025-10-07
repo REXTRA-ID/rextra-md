@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "176034778877",
+    "project_id": "try-oauth-73caf",
+    "storage_bucket": "try-oauth-73caf.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:176034778877:android:bd5946f1509a80bd147894",
+        "android_client_info": {
+          "package_name": "com.example.rextra_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "176034778877-475udhbjjeuf03tr6a9edjpq5c1k8kf3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.rextra_app",
+            "certificate_hash": "509f1e6ab51a2cdedc017f8b4dd86934217a6e4a"
+          }
+        },
+        {
+          "client_id": "176034778877-1gm9603heu4d2b671bn6j52j0e1sc5h9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA94EcGVsFIzsVlAfwbZuEsH-QC0cAs-d8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "176034778877-1gm9603heu4d2b671bn6j52j0e1sc5h9.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "176034778877-avtr2c5ssvua163vl371lfmjdjtgm7hs.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.rextraApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

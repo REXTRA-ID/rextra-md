@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/storage/secure_storage.dart';
 
@@ -68,24 +70,32 @@ class AuthService {
     }
   }
 
-  Future<void> loginWithGoogle({required String idToken}) async {
-    try {
-      final res = await _dio.post(
-        '/auth/google',
-        data: {'id_token': idToken},
-        options: Options(validateStatus: (s) => s != null && s < 600),
-      );
+  Future<void> loginWithGoogle() async {
+    // 1) Google Sign-In
+    final googleUser = await GoogleSignIn().signIn();
+    if (googleUser == null) throw Exception('Login dibatalkan');
 
-      if ((res.statusCode ?? 0) >= 400) {
-        throw Exception(_serverMessage(res.data) ?? 'Login Google gagal (HTTP ${res.statusCode})');
-      }
+    final googleAuth = await googleUser.authentication;
 
-      final token = _extractTokenFromAny(res);
-      if (token == null) throw Exception('Token tidak ditemukan pada response');
-      await AppSecureStorage.saveToken(token);
-    } on DioException catch (e) {
-      throw Exception(_errorMessage(e));
-    }
+    // 2) Sign-in ke Firebase pakai kredensial Google
+    final credential = GoogleAuthProvider.credential(
+      idToken: googleAuth.idToken,
+      accessToken: googleAuth.accessToken,
+    );
+    final userCred =
+    await FirebaseAuth.instance.signInWithCredential(credential);
+
+    // 3) Ambil *Firebase ID Token* (inilah yang backend harapkan)
+    final firebaseIdToken = await userCred.user!.getIdToken(true);
+
+    // 4) Kirim ke backend
+    final res = await _dio.post('/auth/google', data: {
+      'id_token': firebaseIdToken,   // << kirim token Firebase
+    });
+
+    // 5) Simpan token aplikasi jika backend mengembalikannya
+    final token = _extractTokenFromAny(res);
+    if (token != null) await AppSecureStorage.saveToken(token);
   }
 
   Future<Map<String, dynamic>> me() async {

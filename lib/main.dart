@@ -1,12 +1,41 @@
+// lib/main.dart
+import 'dart:async';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 import 'core/router.dart';
+// Jika kamu mendukung Web, generate file ini:
+// import 'firebase_options.dart'; // <- hasil `flutterfire configure`
 
-void main() {
-  setUrlStrategy(PathUrlStrategy());
-  runApp(const ProviderScope(child: RextraApp()));
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Hilangkan # di URL hanya saat web
+  if (kIsWeb) setUrlStrategy(PathUrlStrategy());
+
+  // Kunci orientasi (opsional)
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
+  // Inisialisasi Firebase (wajib untuk Google Sign-In)
+  if (kIsWeb) {
+    // TODO: jika support web, uncomment baris di bawah ini setelah generate firebase_options.dart
+    // await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  } else {
+    await Firebase.initializeApp();
+  }
+
+  // Jalankan app dengan guard supaya error global tetap tercatat
+  runZonedGuarded(
+        () => runApp(const ProviderScope(child: RextraApp())),
+        (e, st) => debugPrint('Uncaught error: $e\n$st'),
+  );
 }
 
 class RextraApp extends StatelessWidget {
@@ -17,6 +46,8 @@ class RextraApp extends StatelessWidget {
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'REXTRA',
+      routerConfig: router,
+      scrollBehavior: const _NoGlowScrollBehavior(),
       theme: ThemeData(
         useMaterial3: true,
 
@@ -75,7 +106,15 @@ class RextraApp extends StatelessWidget {
           hintStyle: const TextStyle(color: Color(0xFF9AA5B1)),
         ),
       ),
-      routerConfig: router,
     );
+  }
+}
+
+/// Menghilangkan efek glow saat scroll (Android & Web)
+class _NoGlowScrollBehavior extends MaterialScrollBehavior {
+  const _NoGlowScrollBehavior();
+  @override
+  Widget buildOverscrollIndicator(BuildContext context, Widget child, ScrollableDetails details) {
+    return child;
   }
 }
