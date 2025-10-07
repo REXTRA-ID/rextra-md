@@ -45,11 +45,6 @@ class _RegisterPageState extends State<RegisterPage> {
   String? _passwordValidator(String? v) {
     final s = v ?? '';
     if (s.length < 8) return 'Minimal 8 karakter';
-    // kalau backend mewajibkan kombinasi, aktifkan baris2 ini:
-    // if (!RegExp(r'[A-Z]').hasMatch(s)) return 'Harus ada huruf besar';
-    // if (!RegExp(r'[a-z]').hasMatch(s)) return 'Harus ada huruf kecil';
-    // if (!RegExp(r'[0-9]').hasMatch(s)) return 'Harus ada angka';
-    // if (!RegExp(r'[!@#\$%^&*(),.?":{}|<>_\-]').hasMatch(s)) return 'Harus ada simbol';
     return null;
   }
 
@@ -76,15 +71,16 @@ class _RegisterPageState extends State<RegisterPage> {
         fullname: nameC.text.trim(),
         email: emailC.text.trim(),
         password: passC.text.trim(),
-        phone: phoneC.text.trim(), // wajib -> dikirim sebagai phone_number
+        phone: phoneC.text.trim(),
       );
 
+      // backend register sukses -> arahkan ke halaman verifikasi
       final email = Uri.encodeQueryComponent(emailC.text.trim());
       if (!mounted) return;
-      // Sukses register → pindah flow ke verifikasi (pakai go)
       context.go('/verify?mode=sent&email=$email');
     } catch (e) {
       final msg = e.toString().replaceFirst('Exception: ', '');
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     } finally {
       if (mounted) setState(() => loading = false);
@@ -93,13 +89,13 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      // NOTE: Tidak set 'leading' manual → biar AppBar pakai implyLeading.
       appBar: AppBar(
-        automaticallyImplyLeading: false, // matikan panah dekor
+        automaticallyImplyLeading: false,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new),
-          onPressed: () => context.pop(), // panah asli
+          onPressed: () => context.pop(),
         ),
         title: Image.asset('assets/images/rextra.png', height: 24),
         centerTitle: true,
@@ -107,7 +103,6 @@ class _RegisterPageState extends State<RegisterPage> {
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
       ),
-
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -115,13 +110,13 @@ class _RegisterPageState extends State<RegisterPage> {
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
             children: [
               Text('Daftar Akun',
-                  style: Theme.of(context).textTheme.headlineMedium,
+                  style: theme.textTheme.headlineMedium,
                   textAlign: TextAlign.center),
               const SizedBox(height: 6),
               Text(
                 'Buat akun REXTRA kamu untuk mulai\nrencanakan dan wujudkan karier impian 🔥',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium,
+                style: theme.textTheme.bodyMedium,
               ),
               const SizedBox(height: 20),
 
@@ -130,6 +125,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 decoration: const InputDecoration(labelText: 'Nama Lengkap'),
                 validator: (v) => (v == null || v.trim().isEmpty) ? 'Nama wajib diisi' : null,
                 textInputAction: TextInputAction.next,
+                enabled: !loading,
               ),
               const SizedBox(height: 14),
 
@@ -139,6 +135,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 keyboardType: TextInputType.emailAddress,
                 validator: _emailValidator,
                 textInputAction: TextInputAction.next,
+                enabled: !loading,
               ),
               const SizedBox(height: 14),
 
@@ -154,6 +151,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 obscureText: !showPass,
                 validator: _passwordValidator,
                 textInputAction: TextInputAction.next,
+                enabled: !loading,
               ),
               const SizedBox(height: 14),
 
@@ -168,6 +166,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 obscureText: !showConfirm,
                 validator: (v) => (v ?? '') != passC.text ? 'Konfirmasi tidak sama' : null,
+                enabled: !loading,
               ),
               const SizedBox(height: 14),
 
@@ -181,6 +180,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   if (!RegExp(r'^0[0-9]{9,13}$').hasMatch(s)) return 'Nomor HP tidak valid';
                   return null;
                 },
+                enabled: !loading,
               ),
               const SizedBox(height: 16),
 
@@ -197,12 +197,12 @@ class _RegisterPageState extends State<RegisterPage> {
                     child: Text.rich(
                       TextSpan(
                         text: 'Dengan mendaftar, saya menyetujui ',
-                        style: Theme.of(context).textTheme.bodyMedium,
+                        style: theme.textTheme.bodyMedium,
                         children: [
                           TextSpan(
                             text: 'syarat dan ketentuan',
                             style: const TextStyle(color: Color(0xFF2E6BFF), fontWeight: FontWeight.w700),
-                            recognizer: TapGestureRecognizer()..onTap = () {/* TODO: open T&C */},
+                            recognizer: TapGestureRecognizer()..onTap = () {},
                           ),
                           const TextSpan(text: ' yang berlaku'),
                         ],
@@ -230,7 +230,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         text: 'Masuk',
                         style: const TextStyle(color: Color(0xFF2E6BFF), fontWeight: FontWeight.w700),
                         recognizer: TapGestureRecognizer()
-                          ..onTap = () => context.push('/login'), // gunakan push agar back bisa pop
+                          ..onTap = () => context.push('/login'),
                       ),
                     ],
                   ),

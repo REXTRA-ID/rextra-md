@@ -13,8 +13,8 @@ class _OnboardingPagerState extends State<OnboardingPager> {
 
   final _images = const [
     'assets/images/background1.png',
-    'assets/images/background3.png',
     'assets/images/background2.png',
+    'assets/images/background3.png',
   ];
 
   final _titles = const [

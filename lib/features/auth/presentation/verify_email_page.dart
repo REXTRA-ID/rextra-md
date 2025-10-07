@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../data/auth_service.dart';
 
 class VerifyEmailPage extends StatefulWidget {
   final String mode; // sent | resent | expired
@@ -11,6 +12,9 @@ class VerifyEmailPage extends StatefulWidget {
 }
 
 class _VerifyEmailPageState extends State<VerifyEmailPage> {
+  final _auth = AuthService();
+  bool loading = false;
+
   void _showFailedDialog() {
     showDialog(
       context: context,
@@ -43,12 +47,27 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
     );
   }
 
+  Future<void> _resend() async {
+    setState(() => loading = true);
+    try {
+      await _auth.resendVerification(widget.email);
+      if (!mounted) return;
+      final emailQ = Uri.encodeQueryComponent(widget.email);
+      // pindah ke mode resent supaya copy sesuai UI
+      context.go('/verify?mode=resent&email=$emailQ');
+    } catch (e) {
+      if (!mounted) return;
+      _showFailedDialog();
+    } finally {
+      if (mounted) setState(() => loading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isExpired = widget.mode == 'expired';
     final isResent  = widget.mode == 'resent';
 
-    // konten dinamis
     final String iconAsset = isExpired ? 'assets/images/rex41.png' : 'assets/images/rex51.png';
     final String title, subtitle, primaryLabel;
     if (isExpired) {
@@ -78,67 +97,44 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
       body: LayoutBuilder(
         builder: (context, cons) {
           final w = MediaQuery.of(context).size.width;
-
-          // panel & tata letak
           final double panelH  = (w * 1.00).clamp(480.0, 570.0);
-          final double mascotW = panelH * 0.46;   // maskot lebih besar
-          final double textTop = panelH * 0.62;   // teks sedikit lebih naik
+          final double mascotW = panelH * 0.46;
+          final double textTop = panelH * 0.62;
 
           return SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ================= FULL-BLEED PANEL =================
                 SizedBox(
                   width: w,
                   height: panelH,
                   child: Stack(
                     clipBehavior: Clip.none,
                     children: [
-                      // ====== background awan (satu file full) ======
                       Positioned.fill(
-                        child: Image.asset(
-                          'assets/images/bgawanawan.png',
-                          fit: BoxFit.cover,
-                        ),
+                        child: Image.asset('assets/images/bgawanawan.png', fit: BoxFit.cover),
                       ),
-
-                      // ====== maskot (lebih tinggi posisinya) ======
                       Align(
-                        alignment: const Alignment(-0.3, -0.50), // geser kiri dengan -0.3, naik sedikit
-                        child: Image.asset(
-                          iconAsset,
-                          width: mascotW * 1.2, // zoom in lebih besar
-                          fit: BoxFit.contain,
-                        ),
+                        alignment: const Alignment(-0.3, -0.50),
+                        child: Image.asset(iconAsset, width: mascotW * 1.2, fit: BoxFit.contain),
                       ),
-
-                      // ====== teks ======
                       Positioned(
-                        left: 20,
-                        right: 20,
-                        top: textTop,
+                        left: 20, right: 20, top: textTop,
                         child: Column(
                           children: [
-                            Text(
-                              title,
+                            Text(title,
                               textAlign: TextAlign.center,
                               style: const TextStyle(
-                                fontSize: 36, // <<< lebih besar
-                                fontWeight: FontWeight.w900,
-                                height: 1.2,
-                                color: Color(0xFF102542),
+                                fontSize: 36, fontWeight: FontWeight.w900,
+                                height: 1.2, color: Color(0xFF102542),
                               ),
                             ),
                             const SizedBox(height: 10),
-                            Text(
-                              subtitle,
+                            Text(subtitle,
                               textAlign: TextAlign.center,
                               style: const TextStyle(
-                                fontSize: 15, // tetap
-                                fontWeight: FontWeight.w600,
-                                height: 1.5,
-                                color: Color(0xFF2E3A4C),
+                                fontSize: 15, fontWeight: FontWeight.w600,
+                                height: 1.5, color: Color(0xFF2E3A4C),
                               ),
                             ),
                           ],
@@ -148,31 +144,23 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
                   ),
                 ),
 
-                // ================= KONTEN BAWAH =================
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 22, 20, 24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       if (!isExpired) ...[
-                        const Text(
-                          'Belum menerima tautan verifikasi?',
+                        const Text('Belum menerima tautan verifikasi?',
                           textAlign: TextAlign.center,
                           style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
                         ),
                         const SizedBox(height: 16),
                       ],
                       ElevatedButton(
-                        onPressed: () {
-                          // TODO: call resend API; jika rate-limited => _showFailedDialog();
-                          final emailQ = Uri.encodeQueryComponent(widget.email);
-                          if (isExpired) {
-                            context.go('/verify?mode=sent&email=$emailQ');
-                          } else {
-                            context.go('/verify?mode=resent&email=$emailQ');
-                          }
-                        },
-                        child: Text(primaryLabel),
+                        onPressed: loading ? null : _resend,
+                        child: loading
+                            ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2))
+                            : Text(primaryLabel),
                       ),
                       const SizedBox(height: 10),
                       FilledButton(
@@ -181,9 +169,7 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
                           backgroundColor: const Color(0xFFEAF1FF),
                           foregroundColor: const Color(0xFF2E6BFF),
                           minimumSize: const Size.fromHeight(52),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                         ),
                         child: const Text('Ganti Email'),
                       ),

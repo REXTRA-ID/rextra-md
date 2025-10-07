@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import '../data/auth_service.dart';
 
 /// Panel hero awan + maskot + judul/subjudul
 class _CloudHeroPanel extends StatelessWidget {
@@ -89,6 +91,7 @@ class ForgotPasswordRequestPage extends StatefulWidget {
 class _ForgotPasswordRequestPageState extends State<ForgotPasswordRequestPage> {
   final _formKey = GlobalKey<FormState>();
   final emailC = TextEditingController();
+  final _auth = AuthService();
   bool loading = false;
 
   @override
@@ -111,17 +114,14 @@ class _ForgotPasswordRequestPageState extends State<ForgotPasswordRequestPage> {
 
     setState(() => loading = true);
     try {
-      // TODO: panggil API request reset, mis. POST /auth/forgot-password
-      // await _auth.requestReset(emailC.text.trim());
-
+      await _auth.requestPasswordReset(emailC.text.trim());
       final q = Uri.encodeQueryComponent(emailC.text.trim());
       if (!mounted) return;
       context.go('/forgot/sent?email=$q');
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal mengirim tautan: $e')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Gagal mengirim tautan: $e')));
     } finally {
       if (mounted) setState(() => loading = false);
     }
@@ -181,10 +181,90 @@ class _ForgotPasswordRequestPageState extends State<ForgotPasswordRequestPage> {
   }
 }
 
+/// Dialog input token manual (dipakai di Sent & Expired)
+Future<void> _showManualTokenDialog(BuildContext context) async {
+  final c = TextEditingController();
+  String? fromClipboard;
+  try {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    fromClipboard = data?.text;
+  } catch (_) {}
+
+  final tokenReg = RegExp(r'token=([^&]+)'); // kalau user paste full URL
+
+  final result = await showDialog<String>(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: const Text('Tempel Token Manual'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: c,
+            decoration: const InputDecoration(
+              hintText: 'Tempel token di sini (atau URL lengkap)',
+            ),
+            maxLines: 2,
+          ),
+          if ((fromClipboard ?? '').isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () { c.text = fromClipboard!; },
+                icon: const Icon(Icons.paste),
+                label: const Text('Tempel dari Clipboard'),
+              ),
+            ),
+          ],
+        ],
+      ),
+      actions: [
+        TextButton(onPressed: ()=>Navigator.pop(context), child: const Text('Batal')),
+        ElevatedButton(onPressed: ()=>Navigator.pop(context, c.text.trim()), child: const Text('Gunakan')),
+      ],
+    ),
+  );
+
+  if (result != null && result.isNotEmpty) {
+    // kalau yang dipaste URL, ekstrak token=
+    var token = result;
+    final m = tokenReg.firstMatch(result);
+    if (m != null) token = Uri.decodeComponent(m.group(1)!);
+
+    final q = Uri.encodeQueryComponent(token);
+    if (context.mounted) context.go('/forgot/new?token=$q');
+  }
+}
+
 /// 2) Tautan reset terkirim (maskot rex51)
-class ForgotPasswordSentPage extends StatelessWidget {
+class ForgotPasswordSentPage extends StatefulWidget {
   final String email;
   const ForgotPasswordSentPage({super.key, required this.email});
+
+  @override
+  State<ForgotPasswordSentPage> createState() => _ForgotPasswordSentPageState();
+}
+
+class _ForgotPasswordSentPageState extends State<ForgotPasswordSentPage> {
+  final _auth = AuthService();
+  bool loading = false;
+
+  Future<void> _resend() async {
+    setState(() => loading = true);
+    try {
+      await _auth.requestPasswordReset(widget.email);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Tautan reset dikirim ulang')));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Gagal kirim ulang: $e')));
+    } finally {
+      if (mounted) setState(() => loading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -205,7 +285,8 @@ class ForgotPasswordSentPage extends StatelessWidget {
             _CloudHeroPanel(
               mascotAsset: 'assets/images/rex51.png',
               title: 'Reset Password Terkirim',
-              subtitle: 'Kami telah mengirim tautan reset sandi ke $email. Periksa kotak masuk/spam dan klik dalam 24 jam sebelum kadaluarsa.',
+              subtitle:
+              'Kami telah mengirim tautan reset sandi ke ${widget.email}. Periksa kotak masuk/spam dan klik dalam 24 jam sebelum kadaluarsa.',
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 22, 20, 24),
@@ -219,14 +300,10 @@ class ForgotPasswordSentPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: () async {
-                      // TODO: call resend reset password endpoint
-                      // await _auth.resendReset(email);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Tautan reset dikirim ulang (dummy)')),
-                      );
-                    },
-                    child: const Text('Kirim Ulang'),
+                    onPressed: loading ? null : _resend,
+                    child: loading
+                        ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Text('Kirim Ulang'),
                   ),
                   const SizedBox(height: 10),
                   FilledButton(
@@ -239,6 +316,13 @@ class ForgotPasswordSentPage extends StatelessWidget {
                     ),
                     child: const Text('Ganti Email'),
                   ),
+                  const SizedBox(height: 18),
+                  // ====== Tambahan: testing manual token ======
+                  OutlinedButton.icon(
+                    onPressed: () => _showManualTokenDialog(context),
+                    icon: const Icon(Icons.vpn_key),
+                    label: const Text('Saya sudah terima token (tempel manual)'),
+                  ),
                 ],
               ),
             ),
@@ -250,9 +334,33 @@ class ForgotPasswordSentPage extends StatelessWidget {
 }
 
 /// 3) Tautan reset kadaluarsa (maskot rex41)
-class ForgotPasswordExpiredPage extends StatelessWidget {
+class ForgotPasswordExpiredPage extends StatefulWidget {
   final String email;
   const ForgotPasswordExpiredPage({super.key, required this.email});
+
+  @override
+  State<ForgotPasswordExpiredPage> createState() => _ForgotPasswordExpiredPageState();
+}
+
+class _ForgotPasswordExpiredPageState extends State<ForgotPasswordExpiredPage> {
+  final _auth = AuthService();
+  bool loading = false;
+
+  Future<void> _resend() async {
+    setState(() => loading = true);
+    try {
+      await _auth.requestPasswordReset(widget.email);
+      final q = Uri.encodeQueryComponent(widget.email);
+      if (!mounted) return;
+      context.go('/forgot/sent?email=$q');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Gagal kirim ulang: $e')));
+    } finally {
+      if (mounted) setState(() => loading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -281,12 +389,10 @@ class ForgotPasswordExpiredPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   ElevatedButton(
-                    onPressed: () async {
-                      // TODO: kirim ulang reset untuk email terkait
-                      final q = Uri.encodeQueryComponent(email);
-                      context.go('/forgot/sent?email=$q');
-                    },
-                    child: const Text('Kirim Ulang'),
+                    onPressed: loading ? null : _resend,
+                    child: loading
+                        ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Text('Kirim Ulang'),
                   ),
                   const SizedBox(height: 10),
                   FilledButton(
@@ -298,6 +404,13 @@ class ForgotPasswordExpiredPage extends StatelessWidget {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
                     child: const Text('Ganti Email'),
+                  ),
+                  const SizedBox(height: 18),
+                  // ====== Tambahan: testing manual token ======
+                  OutlinedButton.icon(
+                    onPressed: () => _showManualTokenDialog(context),
+                    icon: const Icon(Icons.vpn_key),
+                    label: const Text('Saya sudah terima token (tempel manual)'),
                   ),
                 ],
               ),
@@ -321,12 +434,23 @@ class _NewPasswordPageState extends State<NewPasswordPage> {
   final _formKey = GlobalKey<FormState>();
   final passC = TextEditingController();
   final confirmC = TextEditingController();
+  final tokenC = TextEditingController(); // untuk input token manual
+  final _auth = AuthService();
   bool show1 = false, show2 = false, loading = false;
+  late String _tokenInUse;
+
+  @override
+  void initState() {
+    super.initState();
+    _tokenInUse = widget.token;
+    tokenC.text = widget.token;
+  }
 
   @override
   void dispose() {
     passC.dispose();
     confirmC.dispose();
+    tokenC.dispose();
     super.dispose();
   }
 
@@ -345,11 +469,16 @@ class _NewPasswordPageState extends State<NewPasswordPage> {
       );
       return;
     }
+    if (_tokenInUse.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Token tidak ditemukan. Tempel token terlebih dahulu.')),
+      );
+      return;
+    }
+
     setState(() => loading = true);
     try {
-      // TODO: panggil API reset password pakai token
-      // await _auth.resetPassword(token: widget.token, newPassword: passC.text);
-
+      await _auth.changePassword(token: _tokenInUse, newPassword: passC.text);
       if (!mounted) return;
       context.go('/forgot/success');
     } catch (e) {
@@ -362,8 +491,26 @@ class _NewPasswordPageState extends State<NewPasswordPage> {
     }
   }
 
+  Future<void> _pasteFromClipboard() async {
+    try {
+      final data = await Clipboard.getData(Clipboard.kTextPlain);
+      final text = (data?.text ?? '').trim();
+      if (text.isEmpty) return;
+      // support kalau user paste URL penuh
+      final m = RegExp(r'token=([^&]+)').firstMatch(text);
+      final tok = m != null ? Uri.decodeComponent(m.group(1)!) : text;
+      setState(() {
+        _tokenInUse = tok;
+        tokenC.text = tok;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Token ditempel')));
+    } catch (_) {}
+  }
+
   @override
   Widget build(BuildContext context) {
+    final missingToken = _tokenInUse.isEmpty;
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(onPressed: ()=>context.pop(), icon: const Icon(Icons.arrow_back_ios_new)),
@@ -384,10 +531,46 @@ class _NewPasswordPageState extends State<NewPasswordPage> {
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 6),
-              Text(
-                'Masukkan kata sandi barumu di bawah ini.',
-                style: Theme.of(context).textTheme.bodyMedium,
+              Text('Masukkan kata sandi barumu di bawah ini.', style: Theme.of(context).textTheme.bodyMedium),
+
+              // ====== Banner/token manual bila token kosong ======
+              const SizedBox(height: 16),
+              if (missingToken) Card(
+                color: const Color(0xFFFFF7E6),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text(
+                        'Token belum terbaca dari tautan',
+                        style: TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text('Tempel token reset password di bawah ini (boleh tempel URL penuh dari email).'),
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: tokenC,
+                        decoration: InputDecoration(
+                          hintText: 'Tempel token / URL di sini',
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.paste),
+                            onPressed: _pasteFromClipboard,
+                          ),
+                        ),
+                        minLines: 1,
+                        maxLines: 2,
+                        onChanged: (v){
+                          final m = RegExp(r'token=([^&]+)').firstMatch(v);
+                          _tokenInUse = m != null ? Uri.decodeComponent(m.group(1)!) : v.trim();
+                        },
+                      ),
+                    ],
+                  ),
+                ),
               ),
+
               const SizedBox(height: 22),
               Text('Kata Sandi Baru', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 6),
