@@ -46,7 +46,7 @@ class _LoginPageState extends State<LoginPage> {
     try {
       await _auth.login(email: emailC.text.trim(), password: passC.text);
       if (!mounted) return;
-      context.go('/home'); // next flow: replace stack
+      context.go('/persona/welcome'); // next flow: replace stack
     } catch (e) {
       final msg = e.toString().replaceFirst('Exception: ', '');
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal masuk: $msg')));
@@ -144,7 +144,7 @@ class _LoginPageState extends State<LoginPage> {
                   try {
                     await _auth.loginWithGoogle();
                     if (!mounted) return;
-                    context.go('/home');
+                    context.go('/persona/welcome');
                   } catch (e) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Login Google gagal: $e')),

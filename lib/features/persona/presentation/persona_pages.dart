@@ -1,20 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-/// ===================================================================
-/// Helper: back aman. Kalau bisa pop → pop.
-/// Kalau tidak, arahkan ke fallbackPath.
-/// ===================================================================
+/// ---------------- Helper back aman ----------------
 void popOrGo(BuildContext context, String fallbackPath) {
-  final router = GoRouter.of(context);
-  if (router.canPop()) {
+  final r = GoRouter.of(context);
+  if (r.canPop()) {
     context.pop();
   } else {
     context.go(fallbackPath);
   }
 }
 
-/// -------------------- MODEL & HELPER --------------------
+/// ---------------- Model ---------------------------
 enum PersonaType { pathfinder, builder, achiever }
 
 PersonaType resolvePersona({
@@ -22,12 +19,16 @@ PersonaType resolvePersona({
   required bool porto,
   required bool rekrut,
 }) {
-  if (rekrut) return PersonaType.achiever;
-  if (porto) return PersonaType.builder;
-  return PersonaType.pathfinder;
+  // flow baru akan dipakai di tombol next tiap step
+  if (!tujuan) return PersonaType.pathfinder;
+  if (!porto) return PersonaType.builder;
+  if (!rekrut) return PersonaType.builder;
+  return PersonaType.achiever;
 }
 
-/// -------------------- WELCOME ----------------------------
+/// ==================================================
+/// WELCOME
+/// ==================================================
 class PersonaWelcomePage extends StatelessWidget {
   const PersonaWelcomePage({super.key});
 
@@ -36,8 +37,7 @@ class PersonaWelcomePage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          // kalau tak ada halaman sebelumnya, balik ke /home (sementara)
-          onPressed: () => popOrGo(context, '/home'),
+          onPressed: () => popOrGo(context, '/login'),
           icon: const Icon(Icons.arrow_back_ios_new),
         ),
         title: Image.asset('assets/images/rextra.png', height: 22),
@@ -46,55 +46,84 @@ class PersonaWelcomePage extends StatelessWidget {
         surfaceTintColor: Colors.white,
         elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 22, 20, 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const SizedBox(height: 8),
-            Image.asset('assets/images/rex61.png', height: 180, fit: BoxFit.contain),
-            const SizedBox(height: 18),
+      body: LayoutBuilder(
+        builder: (context, cons) {
+          final w = cons.maxWidth;
+          final mascotW = (w * 0.78).clamp(260.0, 340.0);
 
-            const Text(
-              'Selamat Datang Sobat REXTRA! 👋',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w900,
-                color: Color(0xFF102542),
-                height: 1.25,
+          return Stack(
+            children: [
+              Positioned.fill(
+                child: Image.asset('assets/images/backgroundwelcome.png', fit: BoxFit.cover),
               ),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              'Hai, Aku Rexi ✨ asisten virtualmu!\n'
-                  'Yuk, kenalan dulu supaya aku bisa kasih panduan REXTRA yang pas lewat fitur PERSONA REXTRA',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-            const Spacer(),
 
-            // PAKAI PUSH → agar back berfungsi
-            ElevatedButton(
-              onPressed: () => context.push('/persona/step1'),
-              child: const Text('Lanjutkan'),
-            ),
-            const SizedBox(height: 12),
-            FilledButton(
-              onPressed: () => context.push('/persona/info'),
-              child: const Text('Simak Penjelasan'),
-            )
-          ],
-        ),
+              // 🦋 maskot lebih besar & agak ke kiri atas
+              Positioned(
+                top: cons.maxHeight * 0.005, // naik ke atas
+                left: -w * -0.05,             // geser ke kiri
+                child: Image.asset(
+                  'assets/images/rex61.png',
+                  width: mascotW,
+                  fit: BoxFit.contain,
+                ),
+              ),
+
+              // ✨ teks & tombol tetap
+              Align(
+                alignment: const Alignment(0, 0.45),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        'Selamat Datang Sobat REXTRA! 👋',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 36, // 🔠 sedikit lebih besar lagi
+                          fontWeight: FontWeight.w900,
+                          height: 1.2,
+                          color: Color(0xFF102542),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Hai, Aku Rexi ✨ asisten virtualmu!\n'
+                            'Yuk, kenalan dulu supaya aku bisa kasih panduan REXTRA yang pas lewat fitur PERSONA REXTRA',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: () => context.push('/persona/step1'),
+                        child: const Text('Lanjutkan'),
+                      ),
+                      const SizedBox(height: 12),
+                      FilledButton(
+                        onPressed: () => context.push('/persona/info'),
+                        child: const Text('Simak Penjelasan'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 }
 
-/// -------------------- DETAIL INFORMASI ------------------
+
+/// ==================================================
+/// DETAIL INFORMASI
+/// ==================================================
 class PersonaInfoDetailPage extends StatefulWidget {
   const PersonaInfoDetailPage({super.key});
-
   @override
   State<PersonaInfoDetailPage> createState() => _PersonaInfoDetailPageState();
 }
@@ -107,7 +136,6 @@ class _PersonaInfoDetailPageState extends State<PersonaInfoDetailPage> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          // balik ke welcome kalau stack kosong
           onPressed: () => popOrGo(context, '/persona/welcome'),
           icon: const Icon(Icons.arrow_back_ios_new),
         ),
@@ -177,7 +205,6 @@ class _PersonaInfoDetailPageState extends State<PersonaInfoDetailPage> {
                   desc: 'Mahasiswa yang siap mengikuti seleksi rekrutmen kerja dan memulai perjalanan karier pertama.',
                 ),
                 const SizedBox(height: 24),
-                // Kembali → ke welcome (warna biru, ElevatedButton)
                 ElevatedButton(
                   onPressed: () => popOrGo(context, '/persona/welcome'),
                   child: const Text('Kembali'),
@@ -236,8 +263,9 @@ class _PersonaInfoDetailPageState extends State<PersonaInfoDetailPage> {
   }
 }
 
-/// -------------------- STEP PAGE REUSABLE ----------------
-/// Kita TIDAK pakai context.extra. Data antar step dipassing via constructor.
+/// ==================================================
+/// STEP PAGE (dengan early decision)
+/// ==================================================
 class PersonaStepPage extends StatefulWidget {
   final int step;
   final String title;       // "Tujuan Karier" | "Portofolio Karier" | "Rekrutmen Kerja"
@@ -264,7 +292,7 @@ class PersonaStepPage extends StatefulWidget {
 }
 
 class _PersonaStepPageState extends State<PersonaStepPage> {
-  bool selected = true;
+  bool selected = true; // default "Iya"
 
   @override
   Widget build(BuildContext context) {
@@ -303,27 +331,17 @@ class _PersonaStepPageState extends State<PersonaStepPage> {
               ],
             ),
             const SizedBox(height: 6),
-            const LinearProgressIndicator(
-              value: 0, // dummy, kita set di bawah
-              minHeight: 8,
-              color: Color(0xFF2E6BFF),
-              backgroundColor: Color(0xFFE6EAF3),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: widget.step / total,
+                minHeight: 8,
+                color: const Color(0xFF2E6BFF),
+                backgroundColor: const Color(0xFFE6EAF3),
+              ),
             ),
-            // Update value dengan LayoutBuilder biar gak warning rebuild
-            LayoutBuilder(builder: (_, __) {
-              return ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: LinearProgressIndicator(
-                  value: widget.step / total,
-                  minHeight: 8,
-                  color: const Color(0xFF2E6BFF),
-                  backgroundColor: const Color(0xFFE6EAF3),
-                ),
-              );
-            }),
             const SizedBox(height: 16),
 
-            // banner pertanyaan
             AspectRatio(
               aspectRatio: 352 / 120,
               child: ClipRRect(
@@ -348,27 +366,36 @@ class _PersonaStepPageState extends State<PersonaStepPage> {
             const Spacer(),
             ElevatedButton(
               onPressed: () {
+                // EARLY DECISION FLOW
                 if (widget.step == 1) {
-                  // Step 1 → Step 2 (bawa jawaban tujuan lewat constructor)
-                  context.push(
-                    '/persona/step2',
-                    extra: null, // tak dipakai
-                  );
-                  // Router harus inject konstruktor Step2 dengan sebelumnyaTujuan: selected
+                  // Q1: Tujuan
+                  final tujuan = selected;
+                  if (!tujuan) {
+                    context.push('/persona/result', extra: {
+                      'type': PersonaType.pathfinder,
+                    });
+                    return;
+                  }
+                  // jika ya -> lanjut ke step2, bawa tujuan
+                  context.push('/persona/step2', extra: {'tujuan': true});
                 } else if (widget.step == 2) {
-                  // Step 2 → Step 3
-                  context.push(
-                    '/persona/step3',
-                    extra: null,
-                  );
-                  // Router inject Step3 dengan sebelumnyaTujuan: widget.sebelumnyaTujuan, sebelumnyaPorto: selected
+                  // Q2: Portofolio
+                  final tujuan = widget.sebelumnyaTujuan; // sudah dari router
+                  final porto = selected;
+                  if (!porto) {
+                    context.push('/persona/result', extra: {
+                      'type': PersonaType.builder,
+                    });
+                    return;
+                  }
+                  // jika ya -> lanjut step3
+                  context.push('/persona/step3', extra: {'tujuan': tujuan, 'porto': true});
                 } else {
-                  // Step 3 → result
-                  final type = resolvePersona(
-                    tujuan: widget.sebelumnyaTujuan,
-                    porto: widget.sebelumnyaPorto,
-                    rekrut: selected,
-                  );
+                  // Q3: Rekrutmen
+                  final tujuan = widget.sebelumnyaTujuan;
+                  final porto  = widget.sebelumnyaPorto;
+                  final rekrut = selected;
+                  final type   = resolvePersona(tujuan: tujuan, porto: porto, rekrut: rekrut);
                   context.push('/persona/result', extra: {'type': type});
                 }
               },
@@ -422,6 +449,81 @@ class _PersonaStepPageState extends State<PersonaStepPage> {
   }
 }
 
+/// -------------------- MODEL MISI --------------------
+class Mission {
+  final String title;
+  final String iconAsset;
+  final int point;
+  final bool done; // sementara static/dummy
+
+  const Mission({
+    required this.title,
+    required this.iconAsset,
+    required this.point,
+    this.done = false,
+  });
+}
+
+/// Daftar misi per persona (sesuai desain)
+List<Mission> _missionsFor(PersonaType type) {
+  // Ikon berada di assets/images/...
+  const m1 = Mission(
+    title: 'Simpan data pendidikan terkini dan terdahulu',
+    iconAsset: 'assets/images/pendidikan.png',
+    point: 5,
+    done: true, // contoh: yang ini sudah selesai (untuk progres 1/N)
+  );
+  const m2 = Mission(
+    title: 'Coba rekomendasi karier impian lewat fitur Kenali Diri',
+    iconAsset: 'assets/images/rekomendasi.png',
+    point: 20,
+  );
+  const m3 = Mission(
+    title: 'Buka Kamus Karier untuk Jelajahi Dunia Kerja Digital',
+    iconAsset: 'assets/images/kamus.png',
+    point: 20,
+  );
+  const m4 = Mission(
+    title: 'Mulai membuat rencana karier yang jelas dan spesifik',
+    iconAsset: 'assets/images/rencana.png',
+    point: 50,
+  );
+  const m5 = Mission(
+    title: 'Catat & rencanakan aktivitas portofolio setiap semester.',
+    iconAsset: 'assets/images/aktivitas.png',
+    point: 30,
+  );
+  const m6 = Mission(
+    title: 'Gunakan rekomendasi pengisian portofolio karier',
+    iconAsset: 'assets/images/pengisian.png',
+    point: 50,
+  );
+  const m7 = Mission(
+    title: 'Akses modul materi edukasi persiapan karier digital',
+    iconAsset: 'assets/images/modul.png',
+    point: 50,
+  );
+  const m8 = Mission(
+    title: 'Buat CV Profesional dan relevan dengan mudahnya',
+    iconAsset: 'assets/images/cv.png',
+    point: 50,
+  );
+  const m9 = Mission(
+    title: 'Penuhi kebutuhan seleksi kerja dengan mentoring',
+    iconAsset: 'assets/images/kebutuhan.png',
+    point: 50,
+  );
+
+  switch (type) {
+    case PersonaType.pathfinder:
+      return const [m1, m2, m3, m4];
+    case PersonaType.builder:
+      return const [m1, m2, m3, m4, m5, m6];
+    case PersonaType.achiever:
+      return const [m1, m2, m3, m4, m5, m6, m7, m8, m9];
+  }
+}
+
 /// -------------------- RESULT ----------------------------
 class PersonaResultPage extends StatelessWidget {
   const PersonaResultPage({super.key, required this.type});
@@ -430,22 +532,28 @@ class PersonaResultPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Header berdasarkan tipe
     final String header = switch (type) {
       PersonaType.pathfinder => 'assets/images/hasil1.png',
-      PersonaType.builder => 'assets/images/hasil2.png',
-      PersonaType.achiever => 'assets/images/hasil3.png',
+      PersonaType.builder    => 'assets/images/hasil2.png',
+      PersonaType.achiever   => 'assets/images/hasil3.png',
     };
 
     final String nextPersona = switch (type) {
       PersonaType.pathfinder => 'The Builder',
-      PersonaType.builder => 'The Achiever',
-      PersonaType.achiever => 'The Achiever',
+      PersonaType.builder    => 'The Achiever',
+      PersonaType.achiever   => 'The Achiever',
     };
+
+    final missions   = _missionsFor(type);
+    final doneCount  = missions.where((m) => m.done).length;
+    final total      = missions.length;
+    final progress   = total == 0 ? 0.0 : doneCount / total;
 
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          onPressed: () => popOrGo(context, '/persona/step3'),
+          onPressed: () => context.pop(),
           icon: const Icon(Icons.arrow_back_ios_new),
         ),
         title: Image.asset('assets/images/rextra.png', height: 22),
@@ -466,44 +574,63 @@ class PersonaResultPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // progres ringkas
+                // ======= PROGRESS BOX =======
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: const [
-                      BoxShadow(color: Color(0x11000000), blurRadius: 8, offset: Offset(0, 3)),
+                      BoxShadow(
+                        color: Color(0x11000000),
+                        blurRadius: 8,
+                        offset: Offset(0, 3),
+                      ),
                     ],
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        children: const [
-                          Icon(Icons.auto_awesome, color: Color(0xFF2E6BFF)),
-                          SizedBox(width: 8),
-                          Text('1 dari 4 misi Terselesaikan',
-                              style: TextStyle(fontWeight: FontWeight.w800)),
+                        children: [
+                          // ikon bg_story.png sebagai ikon (bukan background)
+                          Image.asset(
+                            'assets/images/bg_story.png',
+                            width: 26,
+                            height: 26,
+                            fit: BoxFit.contain,
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            '$doneCount dari $total misi Terselesaikan',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 16,
+                            ),
+                          ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 10),
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: const LinearProgressIndicator(
-                          value: 0.25,
+                        child: LinearProgressIndicator(
+                          value: progress,
                           minHeight: 8,
-                          color: Color(0xFF2E6BFF),
-                          backgroundColor: Color(0xFFE6EAF3),
+                          color: const Color(0xFF2E6BFF),
+                          backgroundColor: const Color(0xFFE6EAF3),
                         ),
                       ),
                       const SizedBox(height: 6),
-                      Text('⭐️ Persona berikutnya $nextPersona',
-                          style: const TextStyle(fontWeight: FontWeight.w700)),
+                      Text(
+                        '⭐️ Persona berikutnya $nextPersona',
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 16),
+
+                // ======= TENTANG PERSONA =======
                 const Text(
                   'Tentang Persona',
                   style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
@@ -514,21 +641,151 @@ class PersonaResultPage extends StatelessWidget {
                     PersonaType.pathfinder =>
                     'Sebagai Pathfinder, kamu sedang dalam proses mencari dan merencanakan karier.',
                     PersonaType.builder =>
-                    'Sebagai Builder, kamu mulai membangun fondasi karier dengan memperkuat portfolio.',
+                    'Sebagai Builder, kamu mulai membangun fondasi karier dengan memperkuat portofolio.',
                     PersonaType.achiever =>
                     'Sebagai Achiever, kamu fokus mempersiapkan diri untuk proses seleksi kerja.',
                   },
                 ),
+                const SizedBox(height: 18),
+
+                // ======= MISI WAJIB =======
+                const Text(
+                  'Misi Wajib Persona',
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+                ),
+                const SizedBox(height: 10),
+                ...missions.map((m) => _MissionTile(mission: m)).toList(),
                 const SizedBox(height: 22),
+
+                // CTA
                 ElevatedButton(
-                  onPressed: () => context.go('/home'), // ganti ke page tujuanmu nanti
+                  onPressed: () => context.go('/persona/welcome'),
                   child: const Text('Lanjutkan'),
                 ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
   }
 }
+
+/// -------------------- WIDGET MISI --------------------
+class _MissionTile extends StatelessWidget {
+  const _MissionTile({required this.mission});
+
+  final Mission mission;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x11000000),
+            blurRadius: 8,
+            offset: Offset(0, 3),
+          )
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              // ikon kiri
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEAF1FF),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(
+                  child: Image.asset(
+                    mission.iconAsset,
+                    width: 26,
+                    height: 26,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  mission.title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                    height: 1.2,
+                  ),
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: Color(0xFF7A8795)),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              _statusChip(mission.done),
+              const SizedBox(width: 8),
+              _pointChip(mission.point),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _statusChip(bool done) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: done ? const Color(0xFFE8F2FF) : const Color(0xFFF2F4F7),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        done ? 'Selesai' : 'Belum Selesai',
+        style: TextStyle(
+          color: done ? const Color(0xFF2E6BFF) : const Color(0xFF6B7280),
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  /// Chip poin yang benar: ikon `bg_story.png` di kiri, teks "X poin" di kanan.
+  Widget _pointChip(int point) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF4FF),           // biru muda tipis
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Image.asset(
+            'assets/images/bg_story.png',
+            width: 18,
+            height: 18,
+            fit: BoxFit.contain,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            '$point poin',
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF102542),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

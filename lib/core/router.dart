@@ -66,37 +66,39 @@ final router = GoRouter(
     ),
     GoRoute(
       path: '/persona/step2',
-      builder: (_, state) {
-        final tujuan = ((state.extra as Map?)?['tujuan'] as bool?) ?? false;
+      builder: (_, s) {
+        final tujuan = (s.extra is Map && (s.extra as Map)['tujuan'] == true);
         return PersonaStepPage(
           step: 2,
           title: 'Portofolio Karier',
           bannerAsset: 'assets/images/porto.png',
-          optYes: 'Iya, saya sudah punya',
-          optNo: 'Tidak, Saya belum punya',
+          optYes: 'Iya, saya sedang membangun portofolio',
+          optNo: 'Tidak, saya belum punya',
           sebelumnyaTujuan: tujuan,
         );
       },
     ),
     GoRoute(
       path: '/persona/step3',
-      builder: (_, state) {
-        final ex = (state.extra as Map?) ?? {};
+      builder: (_, s) {
+        final m = (s.extra is Map) ? s.extra as Map : {};
         return PersonaStepPage(
           step: 3,
           title: 'Rekrutmen Kerja',
           bannerAsset: 'assets/images/rekrutmen.png',
           optYes: 'Iya, saya sedang ikut',
-          optNo: 'Tidak, Saya belum ikut',
-          sebelumnyaTujuan: ex['tujuan'] as bool? ?? false,
-          sebelumnyaPorto: ex['porto'] as bool? ?? false,
+          optNo: 'Tidak, saya belum ikut',
+          sebelumnyaTujuan: m['tujuan'] == true,
+          sebelumnyaPorto:  m['porto']  == true,
         );
       },
     ),
     GoRoute(
       path: '/persona/result',
-      builder: (_, state) {
-        final type = (state.extra as Map?)?['type'] as PersonaType? ?? PersonaType.pathfinder;
+      builder: (_, s) {
+        final type = (s.extra is Map && (s.extra as Map)['type'] is PersonaType)
+            ? (s.extra as Map)['type'] as PersonaType
+            : PersonaType.pathfinder;
         return PersonaResultPage(type: type);
       },
     ),
