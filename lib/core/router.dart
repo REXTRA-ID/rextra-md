@@ -1,6 +1,7 @@
 // lib/router/router.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:rextra_app/features/home/presentation/home_page.dart';
 
 // AUTH
 import '../features/auth/presentation/forgot_password_pages.dart';
@@ -11,6 +12,7 @@ import '../features/auth/presentation/splash_page.dart';
 import '../features/auth/presentation/verify_email_page.dart';
 
 // PERSONA (Flow 2)
+import '../features/kenalidiri/presentation/kenalidiri_pages.dart';
 import '../features/persona/presentation/persona_pages.dart';
 
 final router = GoRouter(
@@ -104,49 +106,11 @@ final router = GoRouter(
     ),
 
     // --- Sementara: placeholder Home (agar /home tidak "not found") ---
-    GoRoute(path: '/home', builder: (_, __) => const _HomeTemporaryPage()),
+    GoRoute(path: '/home', builder: (_, __) => const HomePage()),
+    GoRoute(path: '/kenali', builder: (_, __) => const KenaliDiriInfoPage()),
+    GoRoute(path: '/kenali/riasec-intro', builder: (_, __) => const RiasecIntroPage()),
+    GoRoute(path: '/kenali/ikigai-intro', builder: (_, __) => const IkigaiIntroPage()),
+    GoRoute(path: '/kenali/riasec-test', builder: (_, __) => const RiasecTestPage()),
+    GoRoute(path: '/kenali/ikigai-test', builder: (_, __) => const IkigaiTestPage()),
   ],
 );
-
-/// ----------------- Placeholder Home -----------------
-/// Ganti dengan halaman home sebenarnya nanti.
-class _HomeTemporaryPage extends StatelessWidget {
-  const _HomeTemporaryPage();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Image.asset('assets/images/rextra.png', height: 22),
-        centerTitle: true,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-        children: [
-          AspectRatio(
-            aspectRatio: 392 / 129,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Image.asset('assets/images/bgprofil.png', fit: BoxFit.cover),
-            ),
-          ),
-          const SizedBox(height: 18),
-          const Text(
-            'Home (temporary)',
-            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Ini hanya placeholder agar rute /home tersedia. '
-                'Silakan ganti ke halaman home sebenarnya ketika siap.',
-          ),
-          const SizedBox(height: 22),
-          ElevatedButton(
-            onPressed: () => context.push('/persona/welcome'),
-            child: const Text('Mulai Persona REXTRA'),
-          ),
-        ],
-      ),
-    );
-  }
-}

@@ -659,7 +659,7 @@ class PersonaResultPage extends StatelessWidget {
 
                 // CTA
                 ElevatedButton(
-                  onPressed: () => context.go('/persona/welcome'),
+                  onPressed: () => context.go('/home'),
                   child: const Text('Lanjutkan'),
                 ),
               ],
