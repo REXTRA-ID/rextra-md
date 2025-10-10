@@ -46,16 +46,18 @@ class KenaliDiriInfoPage extends StatefulWidget {
 class _KenaliDiriInfoPageState extends State<KenaliDiriInfoPage> {
   bool expanded = true;
 
+  // ukuran elemen pinned
+  static const double _bannerH        = 166;  // tinggi banner
+  static const double _statsOverlap   = 30;    // 0 = persis di bawah banner, >0 sedikit overlap
+  static const double _statsHeightEst = 100;  // estimasi tinggi kartu (untuk padding konten)
+  static const double _sidePad        = 16;
+
   @override
   Widget build(BuildContext context) {
-    final bannerHeight = 166.0;
-
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          onPressed: () => _safeBack(context, fallback: '/home'),
-          icon: const Icon(Icons.arrow_back_ios_new),
-        ),
+        leading: IconButton(onPressed: () => _safeBack(context, fallback: '/home'),
+            icon: const Icon(Icons.arrow_back_ios_new)),
         title: Image.asset('assets/images/rextra.png', height: 22),
         centerTitle: true,
         backgroundColor: Colors.white,
@@ -64,107 +66,103 @@ class _KenaliDiriInfoPageState extends State<KenaliDiriInfoPage> {
       ),
       body: Stack(
         children: [
-          /// ------- Banner -------
-          SizedBox(
-            height: bannerHeight,
-            width: double.infinity,
-            child: Image.asset(_assetBgKenaliDiri, fit: BoxFit.cover),
+          // -------------------- KONTEN SCROLLABLE --------------------
+          ListView(
+            padding: EdgeInsets.only(
+              // MULAI di bawah kartu statistik (bukan banner)
+              top: (_bannerH - _statsOverlap) + _statsHeightEst + 12,
+              bottom: 120,
+              left: 20,
+              right: 20,
+            ),
+            children: [
+              _title('Tentang Kenali Diri'),
+              const SizedBox(height: 6),
+              const Text(
+                'Kenali Diri adalah fitur yang memberikan rekomendasi profesi di bidang digital '
+                    'secara terpersonalisasi, berbasis self-assessment dengan implementasi teori '
+                    'RIASEC oleh Holland dan pendekatan Ikigai.',
+              ),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: () => setState(() => expanded = !expanded),
+                child: Text(
+                  expanded ? 'Sembunyikan' : 'Lihat Selengkapnya',
+                  style: const TextStyle(color: Color(0xFF2E6BFF), fontWeight: FontWeight.w700),
+                ),
+              ),
+              if (expanded) ...[
+                const SizedBox(height: 18),
+                _title('Subtest Kenali Diri'),
+                const SizedBox(height: 6),
+                const Text(
+                  'Kenali Diri terdiri atas 2 subtest, dimulai dari tes RIASEC terdiri dari 72 soal berbentuk '
+                      'pilihan ganda, serta profiling lanjutan dengan Ikigai.',
+                ),
+                const SizedBox(height: 18),
+                _title('Tujuan Kenali Diri'),
+                const SizedBox(height: 6),
+                const Text(
+                  'Riset internal REXTRA menetapkan tiga persona utama sesuai kondisi dan kebutuhan '
+                      'persiapan karier mahasiswa.',
+                ),
+                const SizedBox(height: 18),
+                _title('Langkah Penggunaan'),
+                const SizedBox(height: 8),
+                const _Bullet('Pastikan kamu sudah punya kode akses.'),
+                const _Bullet('Klik tombol “Mulai Kenali Diri”.'),
+                const _Bullet('Kerjakan semua subtes tanpa keluar aplikasi.'),
+              ],
+            ],
           ),
 
-          /// ------- Konten scrollable -------
-          ListView(
-            padding: const EdgeInsets.only(bottom: 120),
-            children: [
-              SizedBox(height: bannerHeight - 22),
-
-              /// ------- Panel metrik (floating) -------
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    boxShadow: const [
-                      BoxShadow(color: Color(0x22000000), blurRadius: 10, offset: Offset(0, 3)),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
-                      _MetricItem(value: '2', label: 'Subtest'),
-                      _MetricItem(value: '77', label: 'Soal'),
-                      _MetricItem(value: '15', label: 'Menit'),
-                      _MetricItem(value: '20', label: 'Point'),
-                    ],
-                  ),
-                ),
-              ),
-
-              /// ------- Isi artikel -------
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _title('Tentang Kenali Diri'),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'Kenali Diri adalah fitur yang memberikan rekomendasi profesi di bidang digital '
-                          'secara terpersonalisasi, berbasis self-assessment dengan implementasi teori '
-                          'RIASEC oleh Holland dan pendekatan Ikigai.',
+          // -------------------- PINNED LAYER (BANNER + STATS) --------------------
+          IgnorePointer( // supaya tidak menghalangi scroll
+            ignoring: true,
+            child: SizedBox(
+              // beri ruang cukup agar kartu tidak terpotong
+              height: _bannerH + _statsHeightEst + 40,
+              width: double.infinity,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // banner
+                  Positioned.fill(
+                    top: 0,
+                    bottom: null,
+                    child: SizedBox(
+                      height: _bannerH,
+                      child: Image.asset(_assetBgKenaliDiri, fit: BoxFit.cover),
                     ),
-                    const SizedBox(height: 8),
-                    GestureDetector(
-                      onTap: () => setState(() => expanded = !expanded),
-                      child: Text(
-                        expanded ? 'Sembunyikan' : 'Lihat Selengkapnya',
-                        style: const TextStyle(color: Color(0xFF2E6BFF), fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                    if (expanded) ...[
-                      const SizedBox(height: 18),
-                      _title('Subtest Kenali Diri'),
-                      const SizedBox(height: 6),
-                      const Text(
-                        'Kenali Diri terdiri atas 2 subtest, dimulai dari tes RIASEC terdiri dari 72 soal berbentuk '
-                            'pilihan ganda, serta profiling lanjutan dengan Ikigai.',
-                      ),
-                      const SizedBox(height: 18),
-                      _title('Tujuan Kenali Diri'),
-                      const SizedBox(height: 6),
-                      const Text(
-                        'Riset internal REXTRA menetapkan tiga persona utama sesuai kondisi dan kebutuhan '
-                            'persiapan karier mahasiswa.',
-                      ),
-                      const SizedBox(height: 18),
-                      _title('Langkah Penggunaan'),
-                      const SizedBox(height: 8),
-                      const _Bullet('Pastikan kamu sudah punya kode akses.'),
-                      const _Bullet('Klik tombol “Mulai Kenali Diri”.'),
-                      const _Bullet('Kerjakan semua subtes tanpa keluar aplikasi.'),
-                    ],
-                  ],
-                ),
+                  ),
+                  // kartu statistik: di-set berada sedikit di bawah banner
+                  Positioned(
+                    top: _bannerH - _statsOverlap,
+                    left: _sidePad,
+                    right: _sidePad,
+                    child: _StatsPanel(), // tidak diberi height fixed
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ],
       ),
 
-      /// ------- CTA bawah -------
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
           child: GestureDetector(
-            onLongPress: () => context.go('/kenali/riasec-intro'), // DEV shortcut
+            onLongPress: () => context.go('/kenali/riasec-intro'), // dev shortcut
             child: ElevatedButton(
               onPressed: () async {
                 final ok = await showModalBottomSheet<bool>(
                   context: context,
                   isScrollControlled: true,
                   backgroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                   builder: (_) => const _AccessCodeSheet(),
                 );
                 if (ok == true && context.mounted) {
@@ -179,25 +177,56 @@ class _KenaliDiriInfoPageState extends State<KenaliDiriInfoPage> {
     );
   }
 
+
   Widget _title(String t) => Text(
     t,
-    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: Color(0xFF102542)),
+    style: const TextStyle(
+      fontWeight: FontWeight.w900,
+      fontSize: 20,
+      color: Color(0xFF102542),
+    ),
   );
 }
 
-class _MetricItem extends StatelessWidget {
-  final String value;
-  final String label;
-  const _MetricItem({required this.value, required this.label});
+/// Stats panel (dipakai sebagai pinned di atas)
+class _StatsPanel extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: const [
+          BoxShadow(color: Color(0x22000000), blurRadius: 10, offset: Offset(0, 3)),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: const [
+          _MetricItem(value: '2', label: 'Subtest'),
+          _MetricItem(value: '77', label: 'Soal'),
+          _MetricItem(value: '15', label: 'Menit'),
+          _MetricItem(value: '20', label: 'Point'),
+        ],
+      ),
+    );
+  }
+}
 
+class _MetricItem extends StatelessWidget {
+  final String value; final String label;
+  const _MetricItem({required this.value, required this.label});
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(
-          value,
-          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: Color(0xFF2E6BFF)),
-        ),
+        Text(value,
+            style: const TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 22,
+              color: Color(0xFF2E6BFF),
+            )),
         const SizedBox(height: 2),
         Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
       ],
@@ -577,10 +606,13 @@ class _RiasecQuestionCard extends StatelessWidget {
     required this.onSelect,
   });
 
-  final int number; // 1..72
-  final String question;
-  final int? selected; // 0..4
+  final int number;          // nomor soal 1..72
+  final String question;     // teks soal
+  final int? selected;       // 0..4 (null jika belum dipilih)
   final ValueChanged<int> onSelect;
+
+  static const double _optWidth  = 140; // lebar kotak opsi (cukup utk label panjang)
+  static const double _optHeight = 125; // tinggi kotak opsi
 
   @override
   Widget build(BuildContext context) {
@@ -594,61 +626,84 @@ class _RiasecQuestionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: [
-            _Badge('Soal $number'),
-            const SizedBox(width: 8),
-            const _Badge('Skala: Peminatan',
-                color: Color(0xFFEAF1FF), textColor: Color(0xFF2E6BFF)),
-          ]),
+          // Header badge
+          Row(
+            children: [
+              _Badge('Soal $number'),
+              const SizedBox(width: 8),
+              const _Badge(
+                'Skala: Peminatan',
+                color: Color(0xFFEAF1FF),
+                textColor: Color(0xFF2E6BFF),
+              ),
+            ],
+          ),
           const SizedBox(height: 8),
-          Text(question, style: const TextStyle(fontWeight: FontWeight.w700)),
+
+          // Teks soal
+          Text(
+            question,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 12),
 
-          /// ------------ 5 opsi mendatar, lebar sama ---------------
-          Row(
-            children: List.generate(5, (opt) {
-              final isSel = selected == opt;
-              return Expanded(
-                child: Padding(
-                  padding:
-                  EdgeInsets.only(right: opt == 4 ? 0 : 8), // jarak antar kolom
-                  child: InkWell(
-                    onTap: () => onSelect(opt),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      height: 120, // supaya tinggi tiap kotak sama
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: isSel ? const Color(0xFF2E6BFF) : const Color(0xFFE6EAF3),
-                          width: 2,
+          // 5 opsi – horizontal scroll, ukuran sama
+          SizedBox(
+            height: _optHeight,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: 5,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (context, opt) {
+                final bool isSel = selected == opt;
+                return InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => onSelect(opt),
+                  child: Container(
+                    width: _optWidth,
+                    height: _optHeight,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: isSel
+                            ? const Color(0xFF2E6BFF)
+                            : const Color(0xFFE6EAF3),
+                        width: 2,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      color:
+                      isSel ? const Color(0xFFEAF1FF) : Colors.white,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(
+                          _faceAssets[opt],
+                          width: 40,
+                          height: 40,
                         ),
-                        borderRadius: BorderRadius.circular(12),
-                        color: isSel ? const Color(0xFFEAF1FF) : Colors.white,
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Image.asset(_faceAssets[opt], width: 38, height: 38),
-                          const SizedBox(height: 6),
-                          Text(
-                            _scaleLabels[opt],
-                            textAlign: TextAlign.center,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
-                              height: 1.15,
-                            ),
+                        const SizedBox(height: 6),
+                        // Label skala – 2 baris maksimal agar rapi
+                        Text(
+                          _scaleLabels[opt],
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                            height: 1.2,
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              );
-            }),
+                );
+              },
+            ),
           ),
         ],
       ),
