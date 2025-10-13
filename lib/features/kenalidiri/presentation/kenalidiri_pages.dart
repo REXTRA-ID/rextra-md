@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../kenalidiri/data/kenalidiri_repository.dart';
+import '../data/models/ikigai_models.dart';
+import '../data/models/riasec_models.dart';
+
 /// ---------------------------------------------------------------------------
 /// ASSETS CONSTANTS
 /// ---------------------------------------------------------------------------
@@ -259,7 +263,7 @@ class _Bullet extends StatelessWidget {
 }
 
 /// ============================================================================
-/// BOTTOM SHEET – KODE AKSES
+/// BOTTOM SHEET – KODE AKSES (VALIDASI via API)
 /// ============================================================================
 class _AccessCodeSheet extends StatefulWidget {
   const _AccessCodeSheet();
@@ -271,12 +275,10 @@ class _AccessCodeSheet extends StatefulWidget {
 class _AccessCodeSheetState extends State<_AccessCodeSheet> {
   final c = TextEditingController();
   String? error;
+  final _repo = KenaliDiriRepository();
 
   @override
-  void dispose() {
-    c.dispose();
-    super.dispose();
-  }
+  void dispose() { c.dispose(); super.dispose(); }
 
   @override
   Widget build(BuildContext context) {
@@ -291,39 +293,43 @@ class _AccessCodeSheetState extends State<_AccessCodeSheet> {
           children: [
             Row(
               children: [
-                const Expanded(
-                  child: Text('Kode Akses Kenali Diri', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
-                ),
-                IconButton(onPressed: () => Navigator.pop(context, false), icon: const Icon(Icons.close)),
+                const Expanded(child: Text('Kode Akses Kenali Diri',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900))),
+                IconButton(onPressed: () => Navigator.pop(context, false),
+                    icon: const Icon(Icons.close)),
               ],
             ),
-            Text(
-              'Masukkan kode akses yang didapat dari pembelian via website, Lynk, atau WhatsApp',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
+            Text('Masukkan kode akses yang didapat dari pembelian via website, Lynk, atau WhatsApp',
+                style: Theme.of(context).textTheme.bodyMedium),
             const SizedBox(height: 10),
             TextField(
               controller: c,
               decoration: const InputDecoration(hintText: 'Masukkan Kode Akses'),
             ),
-            if (error != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(error!, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w700)),
-              ),
+            if (error != null) Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(error!, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w700)),
+            ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () {
-                if (c.text.trim().toUpperCase() == 'REXTRA') {
-                  Navigator.pop(context, true);
-                } else {
-                  setState(() => error = 'Upps, kode salah/sudah pernah digunakan!!');
+              onPressed: () async {
+                final code = c.text.trim();
+                setState(()=> error = null);
+                try {
+                  final ok = await _repo.validateHash(code);
+                  if (ok) {
+                    Navigator.pop(context, true);
+                  } else {
+                    setState(()=> error = 'Upps, kode salah/sudah pernah digunakan!!');
+                  }
+                } catch (_) {
+                  setState(()=> error = 'Terjadi kesalahan, coba lagi.');
                 }
               },
               child: const Text('Mulai Kenali Diri'),
             ),
             const SizedBox(height: 10),
-            FilledButton(onPressed: () {}, child: const Text('Beli Kode Akses')),
+            FilledButton(onPressed: (){}, child: const Text('Beli Kode Akses')),
           ],
         ),
       ),
@@ -458,73 +464,101 @@ class RiasecTestPage extends StatefulWidget {
 }
 
 class _RiasecTestPageState extends State<RiasecTestPage> {
-  static const int totalQuestions = 72;
+  final _repo = KenaliDiriRepository();
+
   static const int perSection = 12;
-  static const int sections = totalQuestions ~/ perSection; // 6
-
-  /// dummy 72 soal (boleh diganti real)
-  final List<String> _questions = List.generate(
-    totalQuestions,
-        (i) => 'Saya senang merakit dan memperbaiki komputer, laptop, atau perangkat elektronik (soal ${i + 1}).',
-  );
-
-  /// jawaban: indexSoal -> 0..4
-  final Map<int, int> _answers = {};
-
   int _section = 0; // 0..5
 
-  int get _start => _section * perSection;
-  int get _end => _start + perSection;
+  bool _loading = true;
+  String? _error;
 
-  double get _progress =>
-      _answers.length == 0 ? 0 : (_answers.length / totalQuestions);
+  /// dari API
+  List<RiasecQuestion> _questions = [];
+  /// jawaban: questionId -> 0..4
+  final Map<int, int> _answers = {};
+
+  int get totalQuestions => _questions.length;
+  int get sections => (totalQuestions / perSection).ceil();
+
+  int get _start => _section * perSection;
+  int get _end => (_start + perSection) > totalQuestions ? totalQuestions : (_start + perSection);
+
+  double get _progress => totalQuestions == 0 ? 0 : (_answers.length / totalQuestions);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadQuestions();
+  }
+
+  Future<void> _loadQuestions() async {
+    setState(()=> {_loading = true, _error = null});
+    try {
+      final data = await _repo.getRiasecQuestions(); // List<RiasecQuestion>
+      _questions = data;
+    } catch (e) {
+      _error = 'Gagal memuat pertanyaan';
+    } finally {
+      if (mounted) setState(()=> _loading = false);
+    }
+  }
+
+  Future<void> _submit() async {
+    try {
+      await _repo.submitRiasec(_answers); // Map<int,int>
+      if (mounted) context.go('/kenali/ikigai-intro');
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal mengirim jawaban RIASEC')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final firstNumber = _start + 1; // contoh tampilan "Soal ke 1 dari 72"
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          onPressed: () => _safeBack(context, fallback: '/kenali/riasec-intro'),
-          icon: const Icon(Icons.arrow_back_ios_new),
+    if (_loading) {
+      return Scaffold(appBar: _appBarRiasec(), body: const Center(child: CircularProgressIndicator()));
+    }
+    if (_error != null) {
+      return Scaffold(
+        appBar: _appBarRiasec(),
+        body: Center(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Text(_error!),
+            const SizedBox(height: 8),
+            ElevatedButton(onPressed: _loadQuestions, child: const Text('Coba lagi'))
+          ]),
         ),
-        title: Image.asset('assets/images/rextra.png', height: 22),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        elevation: 0,
-      ),
+      );
+    }
+
+    final firstNumber = _start + 1;
+    return Scaffold(
+      appBar: _appBarRiasec(),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('RIASEC TEST',
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
-              Text('Soal ke $firstNumber dari $totalQuestions',
-                  style: const TextStyle(fontWeight: FontWeight.w700)),
+              const Text('RIASEC TEST', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
+              Text('Soal ke $firstNumber dari $totalQuestions', style: const TextStyle(fontWeight: FontWeight.w700)),
             ],
           ),
           const SizedBox(height: 8),
-          LinearProgressIndicator(
-            value: _progress,
-            minHeight: 8,
-            color: const Color(0xFF2E6BFF),
-            backgroundColor: const Color(0xFFE6EAF3),
-          ),
+          LinearProgressIndicator(value: _progress, minHeight: 8, color: const Color(0xFF2E6BFF), backgroundColor: const Color(0xFFE6EAF3)),
           const SizedBox(height: 14),
 
-          /// -------- 12 soal dalam 1 bagian (scroll vertikal) ----------
-          ...List.generate(perSection, (i) {
-            final qIndex = _start + i;
+          ...List.generate((_end - _start), (i) {
+            final q = _questions[_start + i];
+            final sel = _answers[q.id];
             return Padding(
               padding: const EdgeInsets.only(bottom: 14),
               child: _RiasecQuestionCard(
-                number: qIndex + 1,
-                question: _questions[qIndex],
-                selected: _answers[qIndex],
-                onSelect: (opt) => setState(() => _answers[qIndex] = opt),
+                number: _start + i + 1,
+                question: q.text,       // <- model kamu: text
+                selected: sel,
+                onSelect: (opt) => setState(() => _answers[q.id] = opt),
               ),
             );
           }),
@@ -533,12 +567,8 @@ class _RiasecTestPageState extends State<RiasecTestPage> {
           const Divider(height: 1),
           const SizedBox(height: 10),
 
-          /// -------- Indikator "Bagian Soal ke:" ----------
-          const Text(
-            'Bagian Soal ke:',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
-          ),
+          const Text('Bagian Soal ke:', textAlign: TextAlign.center,
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -546,13 +576,8 @@ class _RiasecTestPageState extends State<RiasecTestPage> {
               final selected = _section == i;
               return Expanded(
                 child: Padding(
-                  padding: EdgeInsets.only(
-                      left: i == 0 ? 0 : 6, right: i == sections - 1 ? 0 : 6),
-                  child: _SectionDot(
-                    label: '${i + 1}',
-                    selected: selected,
-                    onTap: () => setState(() => _section = i),
-                  ),
+                  padding: EdgeInsets.only(left: i == 0 ? 0 : 6, right: i == sections - 1 ? 0 : 6),
+                  child: _SectionDot(label: '${i+1}', selected: selected, onTap: () => setState(() => _section = i)),
                 ),
               );
             }),
@@ -561,7 +586,6 @@ class _RiasecTestPageState extends State<RiasecTestPage> {
         ],
       ),
 
-      /// -------- Navigasi bawah ----------
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
@@ -569,9 +593,7 @@ class _RiasecTestPageState extends State<RiasecTestPage> {
             children: [
               Expanded(
                 child: FilledButton(
-                  onPressed: _section == 0
-                      ? null
-                      : () => setState(() => _section--),
+                  onPressed: _section == 0 ? null : () => setState(() => _section--),
                   child: const Text('Sebelumnya'),
                 ),
               ),
@@ -582,8 +604,7 @@ class _RiasecTestPageState extends State<RiasecTestPage> {
                     if (_section < sections - 1) {
                       setState(() => _section++);
                     } else {
-                      // semua bagian selesai -> ke IKIGAI Intro
-                      context.go('/kenali/ikigai-intro');
+                      _submit();
                     }
                   },
                   child: const Text('Lanjutkan'),
@@ -595,7 +616,17 @@ class _RiasecTestPageState extends State<RiasecTestPage> {
       ),
     );
   }
+
+  PreferredSizeWidget _appBarRiasec() => AppBar(
+    leading: IconButton(onPressed: () => _safeBack(context, fallback: '/kenali/riasec-intro'), icon: const Icon(Icons.arrow_back_ios_new)),
+    title: Image.asset('assets/images/rextra.png', height: 22),
+    centerTitle: true,
+    backgroundColor: Colors.white,
+    surfaceTintColor: Colors.white,
+    elevation: 0,
+  );
 }
+
 
 /// Kartu 1 soal RIASEC
 class _RiasecQuestionCard extends StatelessWidget {
@@ -799,7 +830,7 @@ class _FaceOption extends StatelessWidget {
 }
 
 /// ============================================================================
-/// IKIGAI TEST – opsi TEKS, max 2 pilihan per halaman (dummy 5 halaman)
+/// IKIGAI TEST – integrasi API, opsi TEKS, max 2 pilihan per halaman
 /// ============================================================================
 class IkigaiTestPage extends StatefulWidget {
   const IkigaiTestPage({super.key});
@@ -809,34 +840,109 @@ class IkigaiTestPage extends StatefulWidget {
 }
 
 class _IkigaiTestPageState extends State<IkigaiTestPage> {
-  // 5 halaman; opsi sama untuk demo
-  final List<List<String>> _options = List.generate(
-    5,
-        (_) => [
-      'Menciptakan pengalaman digital interaktif yang memikat pengguna dengan grafis, animasi, dan audio yang dinamis',
-      'Merancang dan membangun pengalaman dan lingkungan simulasi dimana pengguna dapat berinteraksi dan terlibat',
-      'Mengembangkan Aplikasi yang menggabungkan dunia nyata dengan elemen virtual, menciptakan pengalaman yang imersif dan informatif',
-      'Menulis kode yang menghidupkan karakter dan cerita dalam dunia virtual yang mempesona',
-      'Menulis kode yang menghidupkan karakter dan cerita dalam dunia virtual yang mempesona',
-    ],
-  );
+  final _repo = KenaliDiriRepository();
+
+  bool _loading = true;
+  String? _error;
+
+  /// dari API
+  List<IkigaiQuestion> _questions = [];
+
+  /// selections: questionId -> set index opsi yang dipilih (maks 2)
+  final Map<int, Set<int>> _selections = {};
+  /// alasan/teks tambahan per questionId (jika enableReason==true)
+  final Map<int, TextEditingController> _reasonCtrl = {};
+  /// flag error per halaman
+  final Map<int, bool> _showError = {};
 
   int halaman = 0;
-  final Map<int, Set<int>> _selected = {}; // halaman -> index opsi
+
+  IkigaiQuestion get q => _questions[halaman];
+  Set<int> get picks => _selections.putIfAbsent(q.id, () => <int>{});
+  TextEditingController get ctrl => _reasonCtrl.putIfAbsent(q.id, () => TextEditingController());
+  bool get showError => _showError[halaman] ?? false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadQuestions();
+  }
+
+  Future<void> _loadQuestions() async {
+    setState(()=> {_loading = true, _error = null});
+    try {
+      final data = await _repo.getIkigaiQuestions(); // List<IkigaiQuestion>
+      _questions = data;
+    } catch (e) {
+      _error = 'Gagal memuat pertanyaan IKIGAI';
+    } finally {
+      if (mounted) setState(()=> _loading = false);
+    }
+  }
+
+  Future<void> _submit() async {
+    // validasi: bila enableReason dan tidak pilih apapun, harus isi alasan
+    for (int i=0; i<_questions.length; i++) {
+      final qq = _questions[i];
+      final ps = _selections[qq.id] ?? <int>{};
+      final reason = _reasonCtrl[qq.id]?.text.trim() ?? '';
+      if (ps.isEmpty && qq.enableReason && reason.isEmpty) {
+        setState(()=> _showError[i] = true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Halaman ${i+1}: pilih minimal 1 opsi atau isi alasan')),
+        );
+        return;
+      }
+    }
+
+    // mapping ke bentuk yang diinginkan repository submitIkigai()
+    final Map<int, Set<int>> selections = {};
+    final Map<int, String> reasons = {};
+    for (final q in _questions) {
+      selections[q.id] = _selections[q.id] ?? <int>{};
+      reasons[q.id]    = _reasonCtrl[q.id]?.text ?? '';
+    }
+
+    try {
+      await _repo.submitIkigai(selections, reasons);
+      if (mounted) context.go('/kenali/result');
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal mengirim jawaban IKIGAI')),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final c in _reasonCtrl.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final progress = (halaman + 1) / _options.length;
+    if (_loading) {
+      return Scaffold(appBar: _appBarIkigai(), body: const Center(child: CircularProgressIndicator()));
+    }
+    if (_error != null) {
+      return Scaffold(
+        appBar: _appBarIkigai(),
+        body: Center(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Text(_error!),
+            const SizedBox(height: 8),
+            ElevatedButton(onPressed: _loadQuestions, child: const Text('Coba lagi'))
+          ]),
+        ),
+      );
+    }
+
+    final progress = (_questions.isEmpty) ? 0.0 : (halaman + 1) / _questions.length;
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(onPressed: () => _safeBack(context, fallback: '/kenali/ikigai-intro'), icon: const Icon(Icons.arrow_back_ios_new)),
-        title: Image.asset('assets/images/rextra.png', height: 22),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        elevation: 0,
-      ),
+      appBar: _appBarIkigai(),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
         children: [
@@ -844,7 +950,7 @@ class _IkigaiTestPageState extends State<IkigaiTestPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('IKIGAI TEST', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
-              Text('Soal ke ${halaman + 1} dari ${_options.length}', style: const TextStyle(fontWeight: FontWeight.w700)),
+              Text('Soal ke ${halaman + 1} dari ${_questions.length}', style: const TextStyle(fontWeight: FontWeight.w700)),
             ],
           ),
           const SizedBox(height: 8),
@@ -853,23 +959,30 @@ class _IkigaiTestPageState extends State<IkigaiTestPage> {
 
           _IkigaiQuestionCard(
             nomor: halaman + 1,
-            options: _options[halaman],
-            selected: _selected[halaman] ?? <int>{},
-            onToggle: (i) {
+            questionText: q.text,
+            options: q.options,                // << dari model
+            enableReason: q.enableReason,      // << dari model
+            selected: picks,
+            controller: ctrl,
+            showError: showError,
+            onToggle: (idx) {
               setState(() {
-                final set = _selected.putIfAbsent(halaman, () => <int>{});
-                if (set.contains(i)) {
-                  set.remove(i);
+                if (picks.contains(idx)) {
+                  picks.remove(idx);
                 } else {
-                  if (set.length < 2) set.add(i);
+                  if (picks.length < 2) picks.add(idx);
                 }
               });
+            },
+            onChangedText: (_) {
+              if (showError) setState(() => _showError[halaman] = false);
             },
           ),
 
           const SizedBox(height: 100),
         ],
       ),
+
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
@@ -885,13 +998,15 @@ class _IkigaiTestPageState extends State<IkigaiTestPage> {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
-                    if (halaman < _options.length - 1) {
+                    // validasi halaman ini
+                    if (q.enableReason && picks.isEmpty && ctrl.text.trim().isEmpty) {
+                      setState(() => _showError[halaman] = true);
+                      return;
+                    }
+                    if (halaman < _questions.length - 1) {
                       setState(() => halaman++);
                     } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Selesai – hasil akan diproses!')),
-                      );
-                      context.go('/home');
+                      _submit();
                     }
                   },
                   child: const Text('Lanjutkan'),
@@ -903,17 +1018,45 @@ class _IkigaiTestPageState extends State<IkigaiTestPage> {
       ),
     );
   }
+
+  PreferredSizeWidget _appBarIkigai() => AppBar(
+    leading: IconButton(onPressed: () => _safeBack(context, fallback: '/kenali/ikigai-intro'), icon: const Icon(Icons.arrow_back_ios_new)),
+    title: Image.asset('assets/images/rextra.png', height: 22),
+    centerTitle: true,
+    backgroundColor: Colors.white,
+    surfaceTintColor: Colors.white,
+    elevation: 0,
+  );
 }
 
+/// kartu soal + text area + opsi
 class _IkigaiQuestionCard extends StatelessWidget {
+  const _IkigaiQuestionCard({
+    required this.nomor,
+    required this.questionText,
+    required this.options,
+    required this.enableReason,
+    required this.selected,
+    required this.controller,
+    required this.showError,
+    required this.onToggle,
+    required this.onChangedText,
+  });
+
   final int nomor;
+  final String questionText;
   final List<String> options;
+  final bool enableReason;
   final Set<int> selected;
+  final TextEditingController controller;
+  final bool showError;
   final ValueChanged<int> onToggle;
-  const _IkigaiQuestionCard({required this.nomor, required this.options, required this.selected, required this.onToggle});
+  final ValueChanged<String> onChangedText;
 
   @override
   Widget build(BuildContext context) {
+    final len = controller.text.characters.length;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -924,14 +1067,52 @@ class _IkigaiQuestionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: const [_Badge('Soal 1')]),
+          Row(children: [
+            _Badge('Soal $nomor'),
+          ]),
           const SizedBox(height: 8),
-          const Text(
-            'Di antara aktivitas berikut, pilih satu atau dua yang paling anda sukai, paling menarik bagi anda, '
-                'dan dapat anda lakukan secara rutin dalam jangka panjang',
-            style: TextStyle(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 10),
+          Text(questionText, style: const TextStyle(fontWeight: FontWeight.w700)),
+
+          if (showError) ...[
+            const SizedBox(height: 8),
+            const Text(
+              'Perhatian!! Anda harus mengisi isian berikut sebelum melanjutkan',
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.w800),
+            ),
+          ],
+
+          if (enableReason) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                border: Border.all(color: const Color(0xFFE6EAF3)),
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.white,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: controller,
+                    maxLines: 3,
+                    maxLength: 200,
+                    buildCounter: (_, {required int currentLength, maxLength, required bool isFocused}) =>
+                        Text('$currentLength/200', style: const TextStyle(color: Color(0xFF9AA5B1))),
+                    decoration: const InputDecoration(
+                      hintText: 'Jelaskan alasan/pilihan Anda di sini (optional)',
+                      border: InputBorder.none,
+                      counterText: '',
+                    ),
+                    onChanged: onChangedText,
+                  ),
+                  Text('$len/200', style: const TextStyle(color: Color(0xFF9AA5B1))),
+                ],
+              ),
+            ),
+          ],
+
+          const SizedBox(height: 12),
           ...List.generate(options.length, (i) {
             final sel = selected.contains(i);
             return Padding(
@@ -948,9 +1129,10 @@ class _IkigaiQuestionCard extends StatelessWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(sel ? Icons.check_circle : Icons.circle_outlined, color: sel ? const Color(0xFF2E6BFF) : const Color(0xFF9AA5B1)),
+                      Icon(sel ? Icons.check_circle : Icons.circle_outlined,
+                          color: sel ? const Color(0xFF2E6BFF) : const Color(0xFF9AA5B1)),
                       const SizedBox(width: 10),
-                      Expanded(child: Text(options[i])),
+                      Expanded(child: Text(options[i], style: const TextStyle(fontWeight: FontWeight.w700))),
                     ],
                   ),
                 ),

@@ -12,6 +12,7 @@ import '../features/auth/presentation/splash_page.dart';
 import '../features/auth/presentation/verify_email_page.dart';
 
 // PERSONA (Flow 2)
+import '../features/kenalidiri/presentation/hasil_kenalidiri_page.dart';
 import '../features/kenalidiri/presentation/kenalidiri_pages.dart';
 import '../features/persona/presentation/persona_pages.dart';
 
@@ -112,5 +113,10 @@ final router = GoRouter(
     GoRoute(path: '/kenali/ikigai-intro', builder: (_, __) => const IkigaiIntroPage()),
     GoRoute(path: '/kenali/riasec-test', builder: (_, __) => const RiasecTestPage()),
     GoRoute(path: '/kenali/ikigai-test', builder: (_, __) => const IkigaiTestPage()),
+    GoRoute(
+      path: '/kenali/result',
+      builder: (_, __) => const HasilKenaliDiriPage(),
+    ),
+
   ],
 );
