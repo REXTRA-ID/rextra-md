@@ -45,10 +45,19 @@ class _HasilKenaliDiriPageState extends State<HasilKenaliDiriPage> {
       _error = null;
     });
     try {
-      final data = await _repo.getIkigaiResult();
-      _result = data;
+      // Gunakan polling agar nunggu hasil selesai di server
+      final data = await _repo.pollIkigaiResult(
+        retries: 6, // cek 6x
+        delay: const Duration(seconds: 2), // jeda 2 detik
+      );
+      if (!mounted) return;
+      setState(() => _result = data);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.message);
     } catch (e) {
-      _error = 'Gagal memuat hasil Kenali Diri';
+      if (!mounted) return;
+      setState(() => _error = 'Gagal memuat hasil Kenali Diri');
     } finally {
       if (mounted) setState(() => _loading = false);
     }

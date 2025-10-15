@@ -3,6 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../data/auth_service.dart';
 
+void safeBack(BuildContext context, {String fallback = '/auth/login'}) {
+  if (Navigator.of(context).canPop()) {
+    Navigator.of(context).pop();
+  } else {
+    context.go(fallback); // kalau tidak bisa pop, arahkan ke fallback
+  }
+}
 /// Panel hero awan + maskot + judul/subjudul
 class _CloudHeroPanel extends StatelessWidget {
   const _CloudHeroPanel({
@@ -131,12 +138,16 @@ class _ForgotPasswordRequestPageState extends State<ForgotPasswordRequestPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(onPressed: ()=>context.pop(), icon: const Icon(Icons.arrow_back_ios_new)),
-        title: Image.asset('assets/images/rextra.png', height: 22),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        leading: IconButton(
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              context.go('/auth/login'); // fallback kalau tidak ada halaman sebelumnya
+            }
+          },
+          icon: const Icon(Icons.arrow_back_ios_new),
+        ),
       ),
       body: SafeArea(
         child: Form(

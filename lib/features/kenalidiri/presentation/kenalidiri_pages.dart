@@ -1,9 +1,12 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../kenalidiri/data/kenalidiri_repository.dart';
 import '../data/models/ikigai_models.dart';
 import '../data/models/riasec_models.dart';
+
 
 /// ---------------------------------------------------------------------------
 /// ASSETS CONSTANTS
@@ -274,15 +277,69 @@ class _AccessCodeSheet extends StatefulWidget {
 
 class _AccessCodeSheetState extends State<_AccessCodeSheet> {
   final c = TextEditingController();
-  String? error;
   final _repo = KenaliDiriRepository();
+  String? error;
+  bool loading = false;
 
   @override
-  void dispose() { c.dispose(); super.dispose(); }
+  void dispose() {
+    c.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submitCode() async {
+    final code = c.text.trim();
+    if (code.isEmpty) {
+      setState(() => error = 'Kode tidak boleh kosong');
+      return;
+    }
+
+    setState(() {
+      error = null;
+      loading = true;
+    });
+
+    try {
+      final ok = await _repo.validateHash(code);
+      if (ok) {
+        if (!mounted) return;
+        Navigator.pop(context, true);
+      } else {
+        setState(() => error = 'Upps, kode salah atau sudah pernah digunakan!');
+      }
+    } catch (e) {
+      setState(() => error = 'Terjadi kesalahan, coba lagi nanti.');
+    } finally {
+      setState(() => loading = false);
+    }
+  }
+
+  Future<void> _openPurchaseUrl() async {
+    const url = 'https://lynk.id/rextra'; // ✅ gunakan https
+
+    try {
+      final uri = Uri.parse(url);
+      final can = await canLaunchUrl(uri);
+      if (can) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tidak dapat membuka tautan')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Terjadi kesalahan saat membuka link')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.of(context).viewInsets.bottom;
+
     return Padding(
       padding: EdgeInsets.only(bottom: bottom),
       child: Padding(
@@ -291,45 +348,87 @@ class _AccessCodeSheetState extends State<_AccessCodeSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            /// HEADER
             Row(
               children: [
-                const Expanded(child: Text('Kode Akses Kenali Diri',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900))),
-                IconButton(onPressed: () => Navigator.pop(context, false),
-                    icon: const Icon(Icons.close)),
+                const Expanded(
+                  child: Text(
+                    'Kode Akses Kenali Diri',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  icon: const Icon(Icons.close),
+                ),
               ],
             ),
-            Text('Masukkan kode akses yang didapat dari pembelian via website, Lynk, atau WhatsApp',
-                style: Theme.of(context).textTheme.bodyMedium),
-            const SizedBox(height: 10),
-            TextField(
-              controller: c,
-              decoration: const InputDecoration(hintText: 'Masukkan Kode Akses'),
-            ),
-            if (error != null) Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Text(error!, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 4),
+            Text(
+              'Masukkan kode akses yang didapat dari pembelian via website, Lynk, atau WhatsApp.',
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () async {
-                final code = c.text.trim();
-                setState(()=> error = null);
-                try {
-                  final ok = await _repo.validateHash(code);
-                  if (ok) {
-                    Navigator.pop(context, true);
-                  } else {
-                    setState(()=> error = 'Upps, kode salah/sudah pernah digunakan!!');
-                  }
-                } catch (_) {
-                  setState(()=> error = 'Terjadi kesalahan, coba lagi.');
-                }
-              },
-              child: const Text('Mulai Kenali Diri'),
+
+            /// TEXT FIELD
+            TextField(
+              controller: c,
+              decoration: const InputDecoration(
+                hintText: 'Masukkan Kode Akses',
+                border: OutlineInputBorder(),
+              ),
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _submitCode(),
             ),
+            if (error != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  error!,
+                  style: const TextStyle(
+                    color: Colors.red,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+
+            const SizedBox(height: 20),
+
+            /// TOMBOL MULAI
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: loading ? null : _submitCode,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: loading
+                    ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+                    : const Text('Mulai Kenali Diri'),
+              ),
+            ),
+
             const SizedBox(height: 10),
-            FilledButton(onPressed: (){}, child: const Text('Beli Kode Akses')),
+
+            /// TOMBOL BELI KODE AKSES
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _openPurchaseUrl,
+                icon: const Icon(Icons.shopping_cart_outlined),
+                label: const Text('Beli Kode Akses'),
+              ),
+            ),
           ],
         ),
       ),
@@ -470,20 +569,24 @@ class _RiasecTestPageState extends State<RiasecTestPage> {
   int _section = 0; // 0..5
 
   bool _loading = true;
+  bool _submitting = false;
   String? _error;
 
   /// dari API
   List<RiasecQuestion> _questions = [];
-  /// jawaban: questionId -> 0..4
-  final Map<int, int> _answers = {};
+
+  /// jawaban: questionId (String) -> 0..4 (index opsi di UI)
+  final Map<String, int> _answers = {};
 
   int get totalQuestions => _questions.length;
   int get sections => (totalQuestions / perSection).ceil();
 
   int get _start => _section * perSection;
-  int get _end => (_start + perSection) > totalQuestions ? totalQuestions : (_start + perSection);
+  int get _end =>
+      (_start + perSection) > totalQuestions ? totalQuestions : (_start + perSection);
 
-  double get _progress => totalQuestions == 0 ? 0 : (_answers.length / totalQuestions);
+  double get _progress =>
+      totalQuestions == 0 ? 0 : (_answers.length / totalQuestions);
 
   @override
   void initState() {
@@ -492,42 +595,98 @@ class _RiasecTestPageState extends State<RiasecTestPage> {
   }
 
   Future<void> _loadQuestions() async {
-    setState(()=> {_loading = true, _error = null});
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
-      final data = await _repo.getRiasecQuestions(); // List<RiasecQuestion>
-      _questions = data;
+      _questions = await _repo.getRiasecQuestions();
+      // ignore: avoid_print
+      print('RIASEC QUESTIONS FETCHED => ${_questions.length}');
     } catch (e) {
       _error = 'Gagal memuat pertanyaan';
     } finally {
-      if (mounted) setState(()=> _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
   Future<void> _submit() async {
+    // Jangan double submit
+    if (_submitting) return;
+    _submitting = true;
+
     try {
-      await _repo.submitRiasec(_answers); // Map<int,int>
-      if (mounted) context.go('/kenali/ikigai-intro');
+      // Pastikan semua soal terjawab
+      final unanswered = totalQuestions - _answers.length;
+      if (unanswered > 0) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Masih ada $unanswered soal yang belum dijawab')),
+        );
+        return;
+      }
+
+      // Susun payload 1..5
+      final List<int> ordered = _questions.map((q) {
+        final v0to4 = _answers[q.id] ?? 2;
+        return v0to4 + 1;
+      }).toList(growable: false);
+
+      // Kirim ke backend
+      await _repo.submitRiasecList(ordered);
+
+      // Polling hasil agar profil RIASEC "nempel" di server sebelum IKIGAI
+      for (int i = 1; i <= 10; i++) {
+        final res = await _repo.getRiasecResult();
+        debugPrint('RIASEC RESULT POLLING ($i/10) => ${res.code}');
+        if (res.code.isNotEmpty) break;
+        await Future.delayed(const Duration(milliseconds: 800));
+      }
+
+      // Navigasi, STOP eksekusi disini
+      if (!mounted) return;
+      context.go('/kenali/ikigai-intro');
+      return; // penting: jangan lanjut ke bawah
+
+    } on DioException catch (e) {
+      debugPrint('UNEXPECTED SUBMIT ERROR => ${e.message}');
+      if (!mounted) return; // <- cegah crash
+      final data = e.response?.data;
+      final msg = (data is Map && data['message'] != null)
+          ? data['message'].toString()
+          : 'Gagal mengirim jawaban RIASEC';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     } catch (e) {
+      debugPrint('UNEXPECTED SUBMIT ERROR => $e');
+      if (!mounted) return; // <- cegah crash
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Gagal mengirim jawaban RIASEC')),
       );
+    } finally {
+      _submitting = false;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return Scaffold(appBar: _appBarRiasec(), body: const Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        appBar: _appBarRiasec(),
+        body: const Center(child: CircularProgressIndicator()),
+      );
     }
     if (_error != null) {
       return Scaffold(
         appBar: _appBarRiasec(),
         body: Center(
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Text(_error!),
-            const SizedBox(height: 8),
-            ElevatedButton(onPressed: _loadQuestions, child: const Text('Coba lagi'))
-          ]),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(_error!),
+              const SizedBox(height: 8),
+              ElevatedButton(onPressed: _loadQuestions, child: const Text('Coba lagi')),
+            ],
+          ),
         ),
       );
     }
@@ -541,24 +700,32 @@ class _RiasecTestPageState extends State<RiasecTestPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('RIASEC TEST', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
-              Text('Soal ke $firstNumber dari $totalQuestions', style: const TextStyle(fontWeight: FontWeight.w700)),
+              const Text('RIASEC TEST',
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
+              Text('Soal ke $firstNumber dari $totalQuestions',
+                  style: const TextStyle(fontWeight: FontWeight.w700)),
             ],
           ),
           const SizedBox(height: 8),
-          LinearProgressIndicator(value: _progress, minHeight: 8, color: const Color(0xFF2E6BFF), backgroundColor: const Color(0xFFE6EAF3)),
+          LinearProgressIndicator(
+            value: _progress,
+            minHeight: 8,
+            color: const Color(0xFF2E6BFF),
+            backgroundColor: const Color(0xFFE6EAF3),
+          ),
           const SizedBox(height: 14),
 
+          // ---- 12 soal per section ----
           ...List.generate((_end - _start), (i) {
             final q = _questions[_start + i];
-            final sel = _answers[q.id];
+            final sel0to4 = _answers[q.id];
             return Padding(
               padding: const EdgeInsets.only(bottom: 14),
               child: _RiasecQuestionCard(
                 number: _start + i + 1,
-                question: q.text,       // <- model kamu: text
-                selected: sel,
-                onSelect: (opt) => setState(() => _answers[q.id] = opt),
+                question: q.question,     // <- field dari model kamu
+                selected: sel0to4,        // 0..4
+                onSelect: (opt0to4) => setState(() => _answers[q.id] = opt0to4),
               ),
             );
           }),
@@ -567,8 +734,11 @@ class _RiasecTestPageState extends State<RiasecTestPage> {
           const Divider(height: 1),
           const SizedBox(height: 10),
 
-          const Text('Bagian Soal ke:', textAlign: TextAlign.center,
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+          const Text(
+            'Bagian Soal ke:',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+          ),
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -576,8 +746,15 @@ class _RiasecTestPageState extends State<RiasecTestPage> {
               final selected = _section == i;
               return Expanded(
                 child: Padding(
-                  padding: EdgeInsets.only(left: i == 0 ? 0 : 6, right: i == sections - 1 ? 0 : 6),
-                  child: _SectionDot(label: '${i+1}', selected: selected, onTap: () => setState(() => _section = i)),
+                  padding: EdgeInsets.only(
+                    left: i == 0 ? 0 : 6,
+                    right: i == sections - 1 ? 0 : 6,
+                  ),
+                  child: _SectionDot(
+                    label: '${i + 1}',
+                    selected: selected,
+                    onTap: () => setState(() => _section = i),
+                  ),
                 ),
               );
             }),
@@ -585,7 +762,6 @@ class _RiasecTestPageState extends State<RiasecTestPage> {
           const SizedBox(height: 100),
         ],
       ),
-
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
@@ -618,7 +794,9 @@ class _RiasecTestPageState extends State<RiasecTestPage> {
   }
 
   PreferredSizeWidget _appBarRiasec() => AppBar(
-    leading: IconButton(onPressed: () => _safeBack(context, fallback: '/kenali/riasec-intro'), icon: const Icon(Icons.arrow_back_ios_new)),
+    leading: IconButton(
+        onPressed: () => _safeBack(context, fallback: '/kenali/riasec-intro'),
+        icon: const Icon(Icons.arrow_back_ios_new)),
     title: Image.asset('assets/images/rextra.png', height: 22),
     centerTitle: true,
     backgroundColor: Colors.white,
@@ -845,72 +1023,25 @@ class _IkigaiTestPageState extends State<IkigaiTestPage> {
   bool _loading = true;
   String? _error;
 
-  /// dari API
+  /// list pertanyaan dari API (sudah flatten)
   List<IkigaiQuestion> _questions = [];
 
-  /// selections: questionId -> set index opsi yang dipilih (maks 2)
+  /// selections: questionId -> set index opsi yg dipilih (maks. 2)
   final Map<int, Set<int>> _selections = {};
+
   /// alasan/teks tambahan per questionId (jika enableReason==true)
   final Map<int, TextEditingController> _reasonCtrl = {};
-  /// flag error per halaman
+
+  /// flag error per halaman (untuk highlight isian wajib)
   final Map<int, bool> _showError = {};
 
   int halaman = 0;
-
-  IkigaiQuestion get q => _questions[halaman];
-  Set<int> get picks => _selections.putIfAbsent(q.id, () => <int>{});
-  TextEditingController get ctrl => _reasonCtrl.putIfAbsent(q.id, () => TextEditingController());
-  bool get showError => _showError[halaman] ?? false;
+  bool _submitting = false;
 
   @override
   void initState() {
     super.initState();
     _loadQuestions();
-  }
-
-  Future<void> _loadQuestions() async {
-    setState(()=> {_loading = true, _error = null});
-    try {
-      final data = await _repo.getIkigaiQuestions(); // List<IkigaiQuestion>
-      _questions = data;
-    } catch (e) {
-      _error = 'Gagal memuat pertanyaan IKIGAI';
-    } finally {
-      if (mounted) setState(()=> _loading = false);
-    }
-  }
-
-  Future<void> _submit() async {
-    // validasi: bila enableReason dan tidak pilih apapun, harus isi alasan
-    for (int i=0; i<_questions.length; i++) {
-      final qq = _questions[i];
-      final ps = _selections[qq.id] ?? <int>{};
-      final reason = _reasonCtrl[qq.id]?.text.trim() ?? '';
-      if (ps.isEmpty && qq.enableReason && reason.isEmpty) {
-        setState(()=> _showError[i] = true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Halaman ${i+1}: pilih minimal 1 opsi atau isi alasan')),
-        );
-        return;
-      }
-    }
-
-    // mapping ke bentuk yang diinginkan repository submitIkigai()
-    final Map<int, Set<int>> selections = {};
-    final Map<int, String> reasons = {};
-    for (final q in _questions) {
-      selections[q.id] = _selections[q.id] ?? <int>{};
-      reasons[q.id]    = _reasonCtrl[q.id]?.text ?? '';
-    }
-
-    try {
-      await _repo.submitIkigai(selections, reasons);
-      if (mounted) context.go('/kenali/result');
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gagal mengirim jawaban IKIGAI')),
-      );
-    }
   }
 
   @override
@@ -921,25 +1052,161 @@ class _IkigaiTestPageState extends State<IkigaiTestPage> {
     super.dispose();
   }
 
+  Future<void> _loadQuestions() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    const maxTry = 12; // up to ~12 detik
+    for (var i = 1; i <= maxTry; i++) {
+      try {
+        debugPrint('  MULAI GET IKIGAI QUESTIONS (try $i/$maxTry)');
+        final list = await _repo.getIkigaiQuestions();
+
+        // kalau sukses tapi list kosong -> tampilkan info
+        if (list.isEmpty) {
+          if (!mounted) return;
+          setState(() {
+            _questions = [];
+            _loading = false;
+            _error = 'Pertanyaan IKIGAI belum tersedia. Coba lagi nanti.';
+          });
+          return;
+        }
+
+        if (!mounted) return;
+        setState(() {
+          _questions = list;
+          // normalisasi index
+          if (halaman < 0 || halaman >= _questions.length) {
+            halaman = 0;
+          }
+          _loading = false;
+        });
+        return; // selesai
+      } on DioException catch (e) {
+        final data = e.response?.data;
+        final msg = data is Map ? (data['error'] ?? data['message'] ?? '') : '';
+
+        // Profil RIASEC belum siap -> retry tiap 1 detik
+        if (e.response?.statusCode == 400 &&
+            msg.toString().toLowerCase().contains('riasec')) {
+          await Future.delayed(const Duration(seconds: 1));
+          continue;
+        }
+
+        if (!mounted) return;
+        setState(() {
+          _error = 'Gagal memuat pertanyaan IKIGAI';
+          _loading = false;
+        });
+        return;
+      } catch (_) {
+        if (!mounted) return;
+        setState(() {
+          _error = 'Gagal memuat pertanyaan IKIGAI';
+          _loading = false;
+        });
+        return;
+      }
+    }
+
+    // bila 12x retry tetap gagal
+    if (!mounted) return;
+    setState(() {
+      _error = 'Profil RIASEC belum siap. Coba lagi beberapa saat.';
+      _loading = false;
+    });
+  }
+
+  Future<void> _submit() async {
+    if (_submitting) return;
+    _submitting = true;
+
+    // misal tiap halaman merepresentasikan 1 pertanyaan
+    final answers = <int, int>{};
+    for (var i = 0; i < _questions.length; i++) {
+      // ambil pilihan pertama (1–5) sesuai logika kamu
+      final picks = _selections[_questions[i].id];
+      if (picks != null && picks.isNotEmpty) {
+        answers[i + 1] = picks.first + 1; // contoh konversi index ke nilai 1–5
+      } else {
+        answers[i + 1] = 3; // default netral
+      }
+    }
+
+    try {
+      await _repo.submitIkigaiSimple(answers);
+
+      // ambil hasil setelah submit
+      final result = await _repo.getIkigaiResult();
+      debugPrint('IKIGAI RESULT => ${result.riasecCode}');
+
+      if (!mounted) return;
+      context.go('/kenali/result');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal mengirim jawaban IKIGAI')),
+      );
+    } finally {
+      _submitting = false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return Scaffold(appBar: _appBarIkigai(), body: const Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        appBar: _appBarIkigai(),
+        body: const Center(child: CircularProgressIndicator()),
+      );
     }
+
     if (_error != null) {
       return Scaffold(
         appBar: _appBarIkigai(),
         body: Center(
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Text(_error!),
-            const SizedBox(height: 8),
-            ElevatedButton(onPressed: _loadQuestions, child: const Text('Coba lagi'))
-          ]),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(_error!),
+              const SizedBox(height: 8),
+              ElevatedButton(
+                onPressed: _loadQuestions,
+                child: const Text('Coba lagi'),
+              ),
+            ],
+          ),
         ),
       );
     }
 
-    final progress = (_questions.isEmpty) ? 0.0 : (halaman + 1) / _questions.length;
+    // ✅ Guard: kalau kosong (tetap tidak percaya diri ke backend)
+    if (_questions.isEmpty) {
+      return Scaffold(
+        appBar: _appBarIkigai(),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Pertanyaan IKIGAI belum tersedia'),
+              const SizedBox(height: 8),
+              ElevatedButton(onPressed: _loadQuestions, child: const Text('Muat ulang')),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Aman akses pertanyaan ke-`halaman`
+    final q = _questions[halaman];
+    final picks = _selections.putIfAbsent(q.id, () => <int>{});
+    final ctrl = _reasonCtrl.putIfAbsent(q.id, () => TextEditingController());
+    final showError = _showError[halaman] ?? false;
+
+    final progress = (halaman + 1) / _questions.length;
 
     return Scaffold(
       appBar: _appBarIkigai(),
@@ -954,14 +1221,19 @@ class _IkigaiTestPageState extends State<IkigaiTestPage> {
             ],
           ),
           const SizedBox(height: 8),
-          LinearProgressIndicator(value: progress, minHeight: 8, color: const Color(0xFF2E6BFF), backgroundColor: const Color(0xFFE6EAF3)),
+          LinearProgressIndicator(
+            value: progress,
+            minHeight: 8,
+            color: const Color(0xFF2E6BFF),
+            backgroundColor: const Color(0xFFE6EAF3),
+          ),
           const SizedBox(height: 14),
 
           _IkigaiQuestionCard(
             nomor: halaman + 1,
             questionText: q.text,
-            options: q.options,                // << dari model
-            enableReason: q.enableReason,      // << dari model
+            options: q.options,
+            enableReason: q.enableReason,
             selected: picks,
             controller: ctrl,
             showError: showError,
@@ -969,8 +1241,8 @@ class _IkigaiTestPageState extends State<IkigaiTestPage> {
               setState(() {
                 if (picks.contains(idx)) {
                   picks.remove(idx);
-                } else {
-                  if (picks.length < 2) picks.add(idx);
+                } else if (picks.length < 2) {
+                  picks.add(idx);
                 }
               });
             },
@@ -982,7 +1254,6 @@ class _IkigaiTestPageState extends State<IkigaiTestPage> {
           const SizedBox(height: 100),
         ],
       ),
-
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
@@ -998,7 +1269,7 @@ class _IkigaiTestPageState extends State<IkigaiTestPage> {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
-                    // validasi halaman ini
+                    // Validasi halaman aktif
                     if (q.enableReason && picks.isEmpty && ctrl.text.trim().isEmpty) {
                       setState(() => _showError[halaman] = true);
                       return;
@@ -1020,7 +1291,10 @@ class _IkigaiTestPageState extends State<IkigaiTestPage> {
   }
 
   PreferredSizeWidget _appBarIkigai() => AppBar(
-    leading: IconButton(onPressed: () => _safeBack(context, fallback: '/kenali/ikigai-intro'), icon: const Icon(Icons.arrow_back_ios_new)),
+    leading: IconButton(
+      onPressed: () => _safeBack(context, fallback: '/kenali/ikigai-intro'),
+      icon: const Icon(Icons.arrow_back_ios_new),
+    ),
     title: Image.asset('assets/images/rextra.png', height: 22),
     centerTitle: true,
     backgroundColor: Colors.white,

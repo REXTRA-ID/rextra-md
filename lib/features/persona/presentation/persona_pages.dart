@@ -454,18 +454,20 @@ class Mission {
   final String title;
   final String iconAsset;
   final int point;
-  final bool done; // sementara static/dummy
+  final bool done;
+  final VoidCallback? onTap;
 
   const Mission({
     required this.title,
     required this.iconAsset,
     required this.point,
     this.done = false,
+    this.onTap,
   });
 }
 
 /// Daftar misi per persona (sesuai desain)
-List<Mission> _missionsFor(PersonaType type) {
+List<Mission> _missionsFor(PersonaType type, BuildContext context) {
   // Ikon berada di assets/images/...
   const m1 = Mission(
     title: 'Simpan data pendidikan terkini dan terdahulu',
@@ -473,10 +475,11 @@ List<Mission> _missionsFor(PersonaType type) {
     point: 5,
     done: true, // contoh: yang ini sudah selesai (untuk progres 1/N)
   );
-  const m2 = Mission(
+  final m2 = Mission(
     title: 'Coba rekomendasi karier impian lewat fitur Kenali Diri',
     iconAsset: 'assets/images/rekomendasi.png',
     point: 20,
+    onTap: () => context.go('/kenali'), // 👈 route Kenali Diri
   );
   const m3 = Mission(
     title: 'Buka Kamus Karier untuk Jelajahi Dunia Kerja Digital',
@@ -516,11 +519,11 @@ List<Mission> _missionsFor(PersonaType type) {
 
   switch (type) {
     case PersonaType.pathfinder:
-      return const [m1, m2, m3, m4];
+      return [m1, m2, m3, m4];
     case PersonaType.builder:
-      return const [m1, m2, m3, m4, m5, m6];
+      return [m1, m2, m3, m4, m5, m6];
     case PersonaType.achiever:
-      return const [m1, m2, m3, m4, m5, m6, m7, m8, m9];
+      return [m1, m2, m3, m4, m5, m6, m7, m8, m9];
   }
 }
 
@@ -545,7 +548,7 @@ class PersonaResultPage extends StatelessWidget {
       PersonaType.achiever   => 'The Achiever',
     };
 
-    final missions   = _missionsFor(type);
+    final missions = _missionsFor(type, context);
     final doneCount  = missions.where((m) => m.done).length;
     final total      = missions.length;
     final progress   = total == 0 ? 0.0 : doneCount / total;
@@ -659,7 +662,7 @@ class PersonaResultPage extends StatelessWidget {
 
                 // CTA
                 ElevatedButton(
-                  onPressed: () => context.go('/home'),
+                  onPressed: () => context.go('/kenali'),
                   child: const Text('Lanjutkan'),
                 ),
               ],
@@ -671,7 +674,6 @@ class PersonaResultPage extends StatelessWidget {
   }
 }
 
-/// -------------------- WIDGET MISI --------------------
 class _MissionTile extends StatelessWidget {
   const _MissionTile({required this.mission});
 
@@ -679,64 +681,68 @@ class _MissionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x11000000),
-            blurRadius: 8,
-            offset: Offset(0, 3),
-          )
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              // ikon kiri
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEAF1FF),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Center(
-                  child: Image.asset(
-                    mission.iconAsset,
-                    width: 26,
-                    height: 26,
-                    fit: BoxFit.contain,
+    return InkWell( // 👈 tambahkan ini
+      onTap: mission.onTap,
+      borderRadius: BorderRadius.circular(16), // biar ada efek ripple pas tap
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x11000000),
+              blurRadius: 8,
+              offset: Offset(0, 3),
+            )
+          ],
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                // ikon kiri
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEAF1FF),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Image.asset(
+                      mission.iconAsset,
+                      width: 26,
+                      height: 26,
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  mission.title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
-                    height: 1.2,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    mission.title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                      height: 1.2,
+                    ),
                   ),
                 ),
-              ),
-              const Icon(Icons.chevron_right, color: Color(0xFF7A8795)),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              _statusChip(mission.done),
-              const SizedBox(width: 8),
-              _pointChip(mission.point),
-            ],
-          ),
-        ],
+                const Icon(Icons.chevron_right, color: Color(0xFF7A8795)),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                _statusChip(mission.done),
+                const SizedBox(width: 8),
+                _pointChip(mission.point),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -758,12 +764,11 @@ class _MissionTile extends StatelessWidget {
     );
   }
 
-  /// Chip poin yang benar: ikon `bg_story.png` di kiri, teks "X poin" di kanan.
   Widget _pointChip(int point) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF4FF),           // biru muda tipis
+        color: const Color(0xFFEFF4FF),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
