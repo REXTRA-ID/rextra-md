@@ -143,7 +143,7 @@ class _ForgotPasswordRequestPageState extends State<ForgotPasswordRequestPage> {
             if (Navigator.of(context).canPop()) {
               Navigator.of(context).pop();
             } else {
-              context.go('/auth/login'); // fallback kalau tidak ada halaman sebelumnya
+              context.go('/login'); // fallback kalau tidak ada halaman sebelumnya
             }
           },
           icon: const Icon(Icons.arrow_back_ios_new),

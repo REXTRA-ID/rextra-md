@@ -1,10 +1,17 @@
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+
 import '../../../core/network/api_client.dart';
 import '../../../core/storage/secure_storage.dart';
 
 class AuthService {
+  AuthService() {
+    // Pasang interceptor sekali (idempotent di ApiClient)
+    ApiClient.dio.interceptors.removeWhere((i) => i is _AuthAttachInterceptor);
+    ApiClient.dio.interceptors.add(_AuthAttachInterceptor());
+  }
+
   final Dio _dio = ApiClient.dio;
 
   // ---------------- AUTH BASIC ----------------
@@ -27,20 +34,19 @@ class AuthService {
         options: Options(validateStatus: (s) => s != null && s < 600),
       );
 
-      // Bila server balas error 4xx/5xx
       if ((res.statusCode ?? 0) >= 400) {
         throw Exception(_serverMessage(res.data) ?? 'Registrasi gagal (HTTP ${res.statusCode})');
       }
 
-      // Beberapa server tidak kirim token saat register → optional
       final token = _extractTokenFromAny(res);
-      if (token != null) await AppSecureStorage.saveToken(token);
+      if (token != null) {
+        await AppSecureStorage.saveToken(token);
+        ApiClient.attachBearer(token);
+      }
 
       return _serverMessage(res.data) ?? 'Registrasi berhasil';
     } on DioException catch (e) {
       throw Exception(_errorMessage(e));
-    } catch (e) {
-      throw Exception(e.toString());
     }
   }
 
@@ -61,59 +67,75 @@ class AuthService {
 
       final token = _extractTokenFromAny(res);
       if (token == null) {
-        // Jika pakai session cookie, aktifkan CookieJar di ApiClient lalu hapus error ini.
         throw Exception('Token tidak ditemukan pada response');
       }
       await AppSecureStorage.saveToken(token);
+      ApiClient.attachBearer(token);
     } on DioException catch (e) {
       throw Exception(_errorMessage(e));
     }
   }
 
-  Future<void> loginWithGoogle() async {
+  Future<void> loginWithGoogle({String? serverClientId}) async {
     // 1) Google Sign-In
-    final googleUser = await GoogleSignIn().signIn();
+    final google = GoogleSignIn(
+      // optional: kalau kamu punya serverClientId OAUTH di Firebase
+      serverClientId: serverClientId,
+    );
+    final googleUser = await google.signIn();
     if (googleUser == null) throw Exception('Login dibatalkan');
 
     final googleAuth = await googleUser.authentication;
 
-    // 2) Sign-in ke Firebase pakai kredensial Google
+    // 2) Firebase Auth
     final credential = GoogleAuthProvider.credential(
       idToken: googleAuth.idToken,
       accessToken: googleAuth.accessToken,
     );
-    final userCred =
-    await FirebaseAuth.instance.signInWithCredential(credential);
+    final userCred = await FirebaseAuth.instance.signInWithCredential(credential);
 
-    // 3) Ambil *Firebase ID Token* (inilah yang backend harapkan)
+    // 3) Ambil Firebase ID Token
     final firebaseIdToken = await userCred.user!.getIdToken(true);
 
-    // 4) Kirim ke backend
+    // 4) Kirim ke backend (endpoint kamu)
     final res = await _dio.post('/auth/google', data: {
-      'id_token': firebaseIdToken,   // << kirim token Firebase
-    });
+      'id_token': firebaseIdToken,
+    }, options: Options(validateStatus: (s) => s != null && s < 600));
 
-    // 5) Simpan token aplikasi jika backend mengembalikannya
+    if ((res.statusCode ?? 0) >= 400) {
+      throw Exception(_serverMessage(res.data) ?? 'Login Google gagal (HTTP ${res.statusCode})');
+    }
+
+    // 5) Simpan token app
     final token = _extractTokenFromAny(res);
-    if (token != null) await AppSecureStorage.saveToken(token);
+    if (token != null) {
+      await AppSecureStorage.saveToken(token);
+      ApiClient.attachBearer(token);
+    } else {
+      // Jika backend hanya set cookie, minimal biarkan interceptor mengirim cookie.
+      // Namun untuk mobile, sebaiknya backend tetap kirim bearer.
+    }
   }
 
   Future<Map<String, dynamic>> me() async {
     final res = await _dio.get('/auth/me');
-    return (res.data is Map<String, dynamic>)
-        ? res.data as Map<String, dynamic>
-        : {'data': res.data};
+    return (res.data is Map<String, dynamic>) ? res.data as Map<String, dynamic> : {'data': res.data};
   }
 
   Future<void> logout() async {
     try {
-      await _dio.delete('/auth/logout');
+      await _dio.delete('/auth/logout', options: Options(validateStatus: (s) => s != null && s < 600));
+    } catch (_) {
+      // noop
     } finally {
       await AppSecureStorage.deleteToken();
+      ApiClient.detachBearer();
+      // bersihin Firebase & Google
+      try { await FirebaseAuth.instance.signOut(); } catch (_) {}
+      try { await GoogleSignIn().signOut(); } catch (_) {}
     }
   }
 
-  /// Verifikasi dari link email: /auth/verify?token=...
   Future<String> verifyEmail({required String token}) async {
     final res = await _dio.get(
       '/auth/verify',
@@ -125,58 +147,6 @@ class AuthService {
     }
     return _serverMessage(res.data) ?? res.data.toString();
   }
-
-  // ---------------- LUPA PASSWORD & RESEND ----------------
-
-  /// Kirim email lupa password
-  Future<void> requestPasswordReset(String email) async {
-    try {
-      final res = await _dio.post(
-        '/auth/forget',
-        data: {'email': email},
-        options: Options(validateStatus: (s) => s != null && s < 600),
-      );
-
-      if ((res.statusCode ?? 0) >= 400) {
-        throw Exception(_serverMessage(res.data) ?? 'Gagal mengirim email reset (HTTP ${res.statusCode})');
-      }
-
-      // Jika server mengirim {"success": false, ...} dengan 200
-      if (res.data is Map && res.data['success'] == false) {
-        throw Exception(_serverMessage(res.data) ?? 'Gagal mengirim email reset');
-      }
-    } on DioException catch (e) {
-      throw Exception(_errorMessage(e));
-    }
-  }
-
-  /// Ganti password baru (token dari email)
-  Future<void> changePassword({
-    required String token,
-    required String newPassword,
-  }) async {
-    try {
-      final res = await _dio.post(
-        '/auth/change',
-        queryParameters: {'token': token},
-        // ⚠️ backend minta "new_password", bukan "password"
-        data: {'new_password': newPassword},
-        options: Options(validateStatus: (s) => s != null && s < 600),
-      );
-
-      if ((res.statusCode ?? 0) >= 400) {
-        throw Exception(_serverMessage(res.data) ?? 'Gagal mengganti password (HTTP ${res.statusCode})');
-      }
-
-      if (res.data is Map && res.data['success'] == false) {
-        throw Exception(_serverMessage(res.data) ?? 'Gagal mengganti password');
-      }
-    } on DioException catch (e) {
-      throw Exception(_errorMessage(e));
-    }
-  }
-
-  /// Kirim ulang verifikasi email
   Future<void> resendVerification(String email) async {
     try {
       final res = await _dio.post(
@@ -191,6 +161,40 @@ class AuthService {
 
       if (res.data is Map && res.data['success'] == false) {
         throw Exception(_serverMessage(res.data) ?? 'Gagal mengirim ulang verifikasi');
+      }
+    } on DioException catch (e) {
+      throw Exception(_errorMessage(e));
+    }
+  }
+
+  Future<void> requestPasswordReset(String email) async {
+    try {
+      final res = await _dio.post(
+        '/auth/forget',
+        data: {'email': email},
+        options: Options(validateStatus: (s) => s != null && s < 600),
+      );
+      if ((res.statusCode ?? 0) >= 400 || (res.data is Map && res.data['success'] == false)) {
+        throw Exception(_serverMessage(res.data) ?? 'Gagal mengirim email reset');
+      }
+    } on DioException catch (e) {
+      throw Exception(_errorMessage(e));
+    }
+  }
+
+  Future<void> changePassword({
+    required String token,
+    required String newPassword,
+  }) async {
+    try {
+      final res = await _dio.post(
+        '/auth/change',
+        queryParameters: {'token': token},
+        data: {'new_password': newPassword},
+        options: Options(validateStatus: (s) => s != null && s < 600),
+      );
+      if ((res.statusCode ?? 0) >= 400 || (res.data is Map && res.data['success'] == false)) {
+        throw Exception(_serverMessage(res.data) ?? 'Gagal mengganti password');
       }
     } on DioException catch (e) {
       throw Exception(_errorMessage(e));
@@ -245,5 +249,21 @@ class AuthService {
     if (msg != null) return msg;
     if (e.type == DioExceptionType.connectionError) return 'Tidak bisa terhubung ke server';
     return 'HTTP ${e.response?.statusCode ?? ''} ${e.message}';
+  }
+}
+
+/// Interceptor untuk menyuntikkan Bearer token dari storage jika belum ada.
+class _AuthAttachInterceptor extends Interceptor {
+  @override
+  Future<void> onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+    // Kalau header Authorization belum ada, ambil dari storage
+    final existing = options.headers['Authorization'] ?? options.headers['authorization'];
+    if (existing == null || (existing is String && existing.isEmpty)) {
+      final token = await AppSecureStorage.readToken();
+      if (token != null && token.isNotEmpty) {
+        options.headers['Authorization'] = 'Bearer $token';
+      }
+    }
+    return handler.next(options);
   }
 }

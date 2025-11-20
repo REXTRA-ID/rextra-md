@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../kenalidiri/data/kenalidiri_repository.dart';
+import '../../persona/presentation/persona_pages.dart';
 import '../data/models/ikigai_models.dart';
 import '../data/models/riasec_models.dart';
 
@@ -16,20 +17,22 @@ const _assetBannerRiasec = 'assets/images/riasec.png';
 const _assetBannerIkigai = 'assets/images/ikigai.png';
 const _assetIconLangkah = 'assets/images/icon_langkah.png';
 
-const _faceAssets = <String>[
-  'assets/images/face1.png', // sangat setuju
-  'assets/images/face2.png', // setuju
-  'assets/images/face3.png', // netral
-  'assets/images/face4.png', // tidak setuju
-  'assets/images/face5.png', // sangat tidak setuju
+/// Label skala (0..4)
+const List<String> kScaleLabels = [
+  'Tidak pernah',
+  'Jarang',
+  'Kadang-kadang',
+  'Sering',
+  'Sangat sering',
 ];
 
-const _scaleLabels = <String>[
-  'Sangat Setuju',
-  'Setuju',
-  'Netral',
-  'Tidak Setuju',
-  'Sangat Tidak Setuju',
+/// Ikon wajah (0..4) — aman kalau asset belum ada (pakai emoji fallback)
+const List<String> kFaceAssets = [
+  'assets/images/face1.png',
+  'assets/images/face2.png',
+  'assets/images/face3.png',
+  'assets/images/face4.png',
+  'assets/images/face5.png',
 ];
 
 void _safeBack(BuildContext context, {String fallback = '/home'}) async {
@@ -63,7 +66,7 @@ class _KenaliDiriInfoPageState extends State<KenaliDiriInfoPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(onPressed: () => _safeBack(context, fallback: '/home'),
+        leading: IconButton(onPressed: () => PersonaStore.goToPersonaHome(context),
             icon: const Icon(Icons.arrow_back_ios_new)),
         title: Image.asset('assets/images/rextra.png', height: 22),
         centerTitle: true,
@@ -569,8 +572,10 @@ class _RiasecTestPageState extends State<RiasecTestPage> {
   int _section = 0; // 0..5
 
   bool _loading = true;
-  bool _submitting = false;
   String? _error;
+  bool _submitting = false;
+
+  late final ScrollController _scroll;
 
   /// dari API
   List<RiasecQuestion> _questions = [];
@@ -579,19 +584,24 @@ class _RiasecTestPageState extends State<RiasecTestPage> {
   final Map<String, int> _answers = {};
 
   int get totalQuestions => _questions.length;
-  int get sections => (totalQuestions / perSection).ceil();
+  int get sections => totalQuestions == 0 ? 1 : (totalQuestions / perSection).ceil();
 
   int get _start => _section * perSection;
-  int get _end =>
-      (_start + perSection) > totalQuestions ? totalQuestions : (_start + perSection);
+  int get _end => (_start + perSection) > totalQuestions ? totalQuestions : (_start + perSection);
 
-  double get _progress =>
-      totalQuestions == 0 ? 0 : (_answers.length / totalQuestions);
+  double get _progress => totalQuestions == 0 ? 0 : (_answers.length / totalQuestions);
 
   @override
   void initState() {
     super.initState();
+    _scroll = ScrollController();
     _loadQuestions();
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
   }
 
   Future<void> _loadQuestions() async {
@@ -601,8 +611,10 @@ class _RiasecTestPageState extends State<RiasecTestPage> {
     });
     try {
       _questions = await _repo.getRiasecQuestions();
-      // ignore: avoid_print
-      print('RIASEC QUESTIONS FETCHED => ${_questions.length}');
+      debugPrint('RIASEC QUESTIONS FETCHED => ${_questions.length}');
+      // reset state
+      _section = 0;
+      _answers.clear();
     } catch (e) {
       _error = 'Gagal memuat pertanyaan';
     } finally {
@@ -611,12 +623,10 @@ class _RiasecTestPageState extends State<RiasecTestPage> {
   }
 
   Future<void> _submit() async {
-    // Jangan double submit
     if (_submitting) return;
     _submitting = true;
 
     try {
-      // Pastikan semua soal terjawab
       final unanswered = totalQuestions - _answers.length;
       if (unanswered > 0) {
         if (!mounted) return;
@@ -626,16 +636,15 @@ class _RiasecTestPageState extends State<RiasecTestPage> {
         return;
       }
 
-      // Susun payload 1..5
-      final List<int> ordered = _questions.map((q) {
-        final v0to4 = _answers[q.id] ?? 2;
-        return v0to4 + 1;
+      // Susun payload 1..5 sesuai urutan pertanyaan
+      final ordered = _questions.map((q) {
+        final idx0to4 = _answers[q.id] ?? 2; // default netral kalau somehow kosong
+        return idx0to4 + 1;
       }).toList(growable: false);
 
-      // Kirim ke backend
       await _repo.submitRiasecList(ordered);
 
-      // Polling hasil agar profil RIASEC "nempel" di server sebelum IKIGAI
+      // Polling hasil agar profil RIASEC ter-set sebelum lanjut IKIGAI
       for (int i = 1; i <= 10; i++) {
         final res = await _repo.getRiasecResult();
         debugPrint('RIASEC RESULT POLLING ($i/10) => ${res.code}');
@@ -643,28 +652,36 @@ class _RiasecTestPageState extends State<RiasecTestPage> {
         await Future.delayed(const Duration(milliseconds: 800));
       }
 
-      // Navigasi, STOP eksekusi disini
       if (!mounted) return;
       context.go('/kenali/ikigai-intro');
-      return; // penting: jangan lanjut ke bawah
-
+      return;
     } on DioException catch (e) {
-      debugPrint('UNEXPECTED SUBMIT ERROR => ${e.message}');
-      if (!mounted) return; // <- cegah crash
       final data = e.response?.data;
       final msg = (data is Map && data['message'] != null)
           ? data['message'].toString()
           : 'Gagal mengirim jawaban RIASEC';
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     } catch (e) {
-      debugPrint('UNEXPECTED SUBMIT ERROR => $e');
-      if (!mounted) return; // <- cegah crash
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Gagal mengirim jawaban RIASEC')),
       );
     } finally {
       _submitting = false;
     }
+  }
+
+  void _jumpToSection(int i) {
+    setState(() => _section = i.clamp(0, sections - 1));
+    // scroll ke atas biar UX enak saat pindah section
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scroll.hasClients) _scroll.animateTo(
+        0,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   @override
@@ -695,6 +712,7 @@ class _RiasecTestPageState extends State<RiasecTestPage> {
     return Scaffold(
       appBar: _appBarRiasec(),
       body: ListView(
+        controller: _scroll,
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
         children: [
           Row(
@@ -721,10 +739,10 @@ class _RiasecTestPageState extends State<RiasecTestPage> {
             final sel0to4 = _answers[q.id];
             return Padding(
               padding: const EdgeInsets.only(bottom: 14),
-              child: _RiasecQuestionCard(
+              child: RiasecQuestionCard(
                 number: _start + i + 1,
-                question: q.question,     // <- field dari model kamu
-                selected: sel0to4,        // 0..4
+                question: q.question,
+                selected: sel0to4,              // 0..4 (null = belum)
                 onSelect: (opt0to4) => setState(() => _answers[q.id] = opt0to4),
               ),
             );
@@ -753,7 +771,7 @@ class _RiasecTestPageState extends State<RiasecTestPage> {
                   child: _SectionDot(
                     label: '${i + 1}',
                     selected: selected,
-                    onTap: () => setState(() => _section = i),
+                    onTap: () => _jumpToSection(i),
                   ),
                 ),
               );
@@ -769,7 +787,7 @@ class _RiasecTestPageState extends State<RiasecTestPage> {
             children: [
               Expanded(
                 child: FilledButton(
-                  onPressed: _section == 0 ? null : () => setState(() => _section--),
+                  onPressed: _section == 0 ? null : () => _jumpToSection(_section - 1),
                   child: const Text('Sebelumnya'),
                 ),
               ),
@@ -778,7 +796,7 @@ class _RiasecTestPageState extends State<RiasecTestPage> {
                 child: ElevatedButton(
                   onPressed: () {
                     if (_section < sections - 1) {
-                      setState(() => _section++);
+                      _jumpToSection(_section + 1);
                     } else {
                       _submit();
                     }
@@ -795,8 +813,9 @@ class _RiasecTestPageState extends State<RiasecTestPage> {
 
   PreferredSizeWidget _appBarRiasec() => AppBar(
     leading: IconButton(
-        onPressed: () => _safeBack(context, fallback: '/kenali/riasec-intro'),
-        icon: const Icon(Icons.arrow_back_ios_new)),
+      onPressed: () => _safeBack(context, fallback: '/kenali/riasec-intro'),
+      icon: const Icon(Icons.arrow_back_ios_new),
+    ),
     title: Image.asset('assets/images/rextra.png', height: 22),
     centerTitle: true,
     backgroundColor: Colors.white,
@@ -805,10 +824,51 @@ class _RiasecTestPageState extends State<RiasecTestPage> {
   );
 }
 
+class _SectionDot extends StatelessWidget {
+  const _SectionDot({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      child: Container(
+        height: 44,
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFFEAF1FF) : const Color(0xFFF5F7FA),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected ? const Color(0xFF2E6BFF) : const Color(0xFFE6EAF3),
+            width: 2,
+          ),
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+              color: selected ? const Color(0xFF2E6BFF) : const Color(0xFF102542),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 
 /// Kartu 1 soal RIASEC
-class _RiasecQuestionCard extends StatelessWidget {
-  const _RiasecQuestionCard({
+class RiasecQuestionCard extends StatelessWidget {
+  const RiasecQuestionCard({
+    super.key,
     required this.number,
     required this.question,
     required this.selected,
@@ -820,8 +880,8 @@ class _RiasecQuestionCard extends StatelessWidget {
   final int? selected;       // 0..4 (null jika belum dipilih)
   final ValueChanged<int> onSelect;
 
-  static const double _optWidth  = 140; // lebar kotak opsi (cukup utk label panjang)
-  static const double _optHeight = 125; // tinggi kotak opsi
+  static const double _optWidth  = 140;
+  static const double _optHeight = 125;
 
   @override
   Widget build(BuildContext context) {
@@ -871,33 +931,31 @@ class _RiasecQuestionCard extends StatelessWidget {
                   child: Container(
                     width: _optWidth,
                     height: _optHeight,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 10,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
                     decoration: BoxDecoration(
                       border: Border.all(
-                        color: isSel
-                            ? const Color(0xFF2E6BFF)
-                            : const Color(0xFFE6EAF3),
+                        color: isSel ? const Color(0xFF2E6BFF) : const Color(0xFFE6EAF3),
                         width: 2,
                       ),
                       borderRadius: BorderRadius.circular(12),
-                      color:
-                      isSel ? const Color(0xFFEAF1FF) : Colors.white,
+                      color: isSel ? const Color(0xFFEAF1FF) : Colors.white,
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+                        // Ikon aman: kalau asset tidak ada → tampilkan emoji
                         Image.asset(
-                          _faceAssets[opt],
+                          kFaceAssets[opt],
                           width: 40,
                           height: 40,
+                          errorBuilder: (_, __, ___) {
+                            const emojis = ['😖','☹️','😐','🙂','🤩'];
+                            return Text(emojis[opt], style: const TextStyle(fontSize: 32));
+                          },
                         ),
                         const SizedBox(height: 6),
-                        // Label skala – 2 baris maksimal agar rapi
                         Text(
-                          _scaleLabels[opt],
+                          kScaleLabels[opt],
                           textAlign: TextAlign.center,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -920,89 +978,17 @@ class _RiasecQuestionCard extends StatelessWidget {
   }
 }
 
-/// Dot/Chip nomor bagian (1..6)
-class _SectionDot extends StatelessWidget {
-  const _SectionDot({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: onTap,
-      child: Container(
-        height: 44,
-        decoration: BoxDecoration(
-          color: selected ? const Color(0xFFEAF1FF) : const Color(0xFFF5F7FA),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: selected ? const Color(0xFF2E6BFF) : const Color(0xFFE6EAF3),
-            width: 2,
-          ),
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              color: selected ? const Color(0xFF2E6BFF) : const Color(0xFF102542),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _Badge extends StatelessWidget {
   final String text;
   final Color color;
   final Color textColor;
-  const _Badge(this.text, {this.color = const Color(0xFF2E6BFF), this.textColor = Colors.white});
+  const _Badge(this.text, {this.color = const Color(0xFF2E6BFF), this.textColor = Colors.white, super.key});
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(10)),
       child: Text(text, style: TextStyle(color: textColor, fontWeight: FontWeight.w800)),
-    );
-  }
-}
-
-class _FaceOption extends StatelessWidget {
-  final String iconAsset;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _FaceOption({required this.iconAsset, required this.label, required this.selected, required this.onTap});
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        width: 112,
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-        decoration: BoxDecoration(
-          border: Border.all(color: selected ? const Color(0xFF2E6BFF) : const Color(0xFFE6EAF3), width: 2),
-          borderRadius: BorderRadius.circular(12),
-          color: selected ? const Color(0xFFEAF1FF) : Colors.white,
-        ),
-        child: Column(
-          children: [
-            Image.asset(iconAsset, width: 40, height: 40),
-            const SizedBox(height: 6),
-            Text(label, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w700)),
-          ],
-        ),
-      ),
     );
   }
 }

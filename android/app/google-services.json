@@ -48,6 +48,130 @@
           ]
         }
       }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:176034778877:android:0d184b837d8b25df147894",
+        "android_client_info": {
+          "package_name": "com.rextra.career"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "176034778877-1gm9603heu4d2b671bn6j52j0e1sc5h9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA94EcGVsFIzsVlAfwbZuEsH-QC0cAs-d8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "176034778877-1gm9603heu4d2b671bn6j52j0e1sc5h9.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "176034778877-avtr2c5ssvua163vl371lfmjdjtgm7hs.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.rextraApp"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:176034778877:android:0b9aa5a7b52f8258147894",
+        "android_client_info": {
+          "package_name": "id.rextra.student"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "176034778877-7bg3r05kg3k94if4c613n10eimbpscgq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "id.rextra.student",
+            "certificate_hash": "509f1e6ab51a2cdedc017f8b4dd86934217a6e4a"
+          }
+        },
+        {
+          "client_id": "176034778877-e9qf1tb6bl5uefruqpekfoi15jjparke.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "id.rextra.student",
+            "certificate_hash": "5ae151a955c23ef73fe25040703c0c6dcfe8ec72"
+          }
+        },
+        {
+          "client_id": "176034778877-1gm9603heu4d2b671bn6j52j0e1sc5h9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA94EcGVsFIzsVlAfwbZuEsH-QC0cAs-d8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "176034778877-1gm9603heu4d2b671bn6j52j0e1sc5h9.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "176034778877-avtr2c5ssvua163vl371lfmjdjtgm7hs.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.rextraApp"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:176034778877:android:bd8a1ae8ef3e8fa3147894",
+        "android_client_info": {
+          "package_name": "id.rextra.technology"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "176034778877-1gm9603heu4d2b671bn6j52j0e1sc5h9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA94EcGVsFIzsVlAfwbZuEsH-QC0cAs-d8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "176034778877-1gm9603heu4d2b671bn6j52j0e1sc5h9.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "176034778877-avtr2c5ssvua163vl371lfmjdjtgm7hs.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.rextraApp"
+              }
+            }
+          ]
+        }
+      }
     }
   ],
   "configuration_version": "1"

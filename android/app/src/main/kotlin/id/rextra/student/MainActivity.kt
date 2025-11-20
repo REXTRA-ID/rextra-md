@@ -1,4 +1,4 @@
-package com.example.rextra_app
+package id.rextra.student
 
 import io.flutter.embedding.android.FlutterActivity
 

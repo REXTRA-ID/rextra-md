@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// ---------------- Helper back aman ----------------
 void popOrGo(BuildContext context, String fallbackPath) {
@@ -19,11 +20,42 @@ PersonaType resolvePersona({
   required bool porto,
   required bool rekrut,
 }) {
-  // flow baru akan dipakai di tombol next tiap step
   if (!tujuan) return PersonaType.pathfinder;
   if (!porto) return PersonaType.builder;
   if (!rekrut) return PersonaType.builder;
   return PersonaType.achiever;
+}
+
+/// ---------------- Store persona (Global) ----------
+class PersonaStore {
+  static const _key = 'last_persona';
+
+  static Future<void> save(PersonaType t) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_key, t.name);
+  }
+
+  static Future<PersonaType?> get() async {
+    final prefs = await SharedPreferences.getInstance();
+    final v = prefs.getString(_key);
+    if (v == null) return null;
+    try {
+      return PersonaType.values.firstWhere((e) => e.name == v);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Helper jika butuh balik ke halaman persona spesifik
+  static Future<void> goToPersonaHome(BuildContext context) async {
+    // Tergantung flow route kamu. Di sini aku arahkan balik ke RESULT Persona terakhir
+    final p = await get();
+    if (p == null) {
+      context.go('/persona/welcome');
+      return;
+    }
+    context.go('/persona/result', extra: {'type': p});
+  }
 }
 
 /// ==================================================
@@ -80,7 +112,7 @@ class PersonaWelcomePage extends StatelessWidget {
                         'Selamat Datang Sobat REXTRA! 👋',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 36, // 🔠 sedikit lebih besar lagi
+                          fontSize: 36,
                           fontWeight: FontWeight.w900,
                           height: 1.2,
                           color: Color(0xFF102542),
@@ -117,7 +149,6 @@ class PersonaWelcomePage extends StatelessWidget {
     );
   }
 }
-
 
 /// ==================================================
 /// DETAIL INFORMASI
@@ -268,7 +299,7 @@ class _PersonaInfoDetailPageState extends State<PersonaInfoDetailPage> {
 /// ==================================================
 class PersonaStepPage extends StatefulWidget {
   final int step;
-  final String title;       // "Tujuan Karier" | "Portofolio Karier" | "Rekrutmen Kerja"
+  final String title; // "Tujuan Karier" | "Portofolio Karier" | "Rekrutmen Kerja"
   final String bannerAsset; // tujuan.png | porto.png | rekrutmen.png
   final String optYes;
   final String optNo;
@@ -365,38 +396,50 @@ class _PersonaStepPageState extends State<PersonaStepPage> {
 
             const Spacer(),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 // EARLY DECISION FLOW
                 if (widget.step == 1) {
                   // Q1: Tujuan
                   final tujuan = selected;
                   if (!tujuan) {
-                    context.push('/persona/result', extra: {
-                      'type': PersonaType.pathfinder,
-                    });
+                    // PATHFINDER
+                    await PersonaStore.save(PersonaType.pathfinder);
+                    if (context.mounted) {
+                      context.push('/persona/result', extra: {
+                        'type': PersonaType.pathfinder,
+                      });
+                    }
                     return;
                   }
-                  // jika ya -> lanjut ke step2, bawa tujuan
+                  // ya -> step2
                   context.push('/persona/step2', extra: {'tujuan': true});
                 } else if (widget.step == 2) {
                   // Q2: Portofolio
                   final tujuan = widget.sebelumnyaTujuan; // sudah dari router
                   final porto = selected;
                   if (!porto) {
-                    context.push('/persona/result', extra: {
-                      'type': PersonaType.builder,
-                    });
+                    // BUILDER
+                    await PersonaStore.save(PersonaType.builder);
+                    if (context.mounted) {
+                      context.push('/persona/result', extra: {
+                        'type': PersonaType.builder,
+                      });
+                    }
                     return;
                   }
-                  // jika ya -> lanjut step3
+                  // ya -> step3
                   context.push('/persona/step3', extra: {'tujuan': tujuan, 'porto': true});
                 } else {
                   // Q3: Rekrutmen
                   final tujuan = widget.sebelumnyaTujuan;
-                  final porto  = widget.sebelumnyaPorto;
+                  final porto = widget.sebelumnyaPorto;
                   final rekrut = selected;
-                  final type   = resolvePersona(tujuan: tujuan, porto: porto, rekrut: rekrut);
-                  context.push('/persona/result', extra: {'type': type});
+                  final type = resolvePersona(tujuan: tujuan, porto: porto, rekrut: rekrut);
+
+                  await PersonaStore.save(type);
+                  if (context.mounted) {
+                    context.push('/persona/result', extra: {'type': type});
+                  }
                 }
               },
               child: Text(widget.step == 3 ? 'Lihat Hasil' : 'Lanjutkan'),
@@ -538,25 +581,25 @@ class PersonaResultPage extends StatelessWidget {
     // Header berdasarkan tipe
     final String header = switch (type) {
       PersonaType.pathfinder => 'assets/images/hasil1.png',
-      PersonaType.builder    => 'assets/images/hasil2.png',
-      PersonaType.achiever   => 'assets/images/hasil3.png',
+      PersonaType.builder => 'assets/images/hasil2.png',
+      PersonaType.achiever => 'assets/images/hasil3.png',
     };
 
     final String nextPersona = switch (type) {
       PersonaType.pathfinder => 'The Builder',
-      PersonaType.builder    => 'The Achiever',
-      PersonaType.achiever   => 'The Achiever',
+      PersonaType.builder => 'The Achiever',
+      PersonaType.achiever => 'The Achiever',
     };
 
     final missions = _missionsFor(type, context);
-    final doneCount  = missions.where((m) => m.done).length;
-    final total      = missions.length;
-    final progress   = total == 0 ? 0.0 : doneCount / total;
+    final doneCount = missions.where((m) => m.done).length;
+    final total = missions.length;
+    final progress = total == 0 ? 0.0 : doneCount / total;
 
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          onPressed: () => context.pop(),
+          onPressed: () => popOrGo(context, '/persona/welcome'),
           icon: const Icon(Icons.arrow_back_ios_new),
         ),
         title: Image.asset('assets/images/rextra.png', height: 22),
@@ -660,11 +703,11 @@ class PersonaResultPage extends StatelessWidget {
                 ...missions.map((m) => _MissionTile(mission: m)).toList(),
                 const SizedBox(height: 22),
 
-                // CTA
-                ElevatedButton(
-                  onPressed: () => context.go('/kenali'),
-                  child: const Text('Lanjutkan'),
-                ),
+                // ❌ HAPUS tombol "Lanjutkan" — akses fitur via mission card.
+                // ElevatedButton(
+                //   onPressed: () => context.go('/kenali'),
+                //   child: const Text('Lanjutkan'),
+                // ),
               ],
             ),
           ),
@@ -676,27 +719,20 @@ class PersonaResultPage extends StatelessWidget {
 
 class _MissionTile extends StatelessWidget {
   const _MissionTile({required this.mission});
-
   final Mission mission;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell( // 👈 tambahkan ini
+    return InkWell(
       onTap: mission.onTap,
-      borderRadius: BorderRadius.circular(16), // biar ada efek ripple pas tap
+      borderRadius: BorderRadius.circular(16),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x11000000),
-              blurRadius: 8,
-              offset: Offset(0, 3),
-            )
-          ],
+          boxShadow: const [BoxShadow(color: Color(0x11000000), blurRadius: 8, offset: Offset(0, 3))],
         ),
         child: Column(
           children: [
@@ -774,23 +810,14 @@ class _MissionTile extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset(
-            'assets/images/bg_story.png',
-            width: 18,
-            height: 18,
-            fit: BoxFit.contain,
-          ),
+          Image.asset('assets/images/bg_story.png', width: 18, height: 18, fit: BoxFit.contain),
           const SizedBox(width: 6),
           Text(
             '$point poin',
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF102542),
-            ),
+            style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF102542)),
           ),
         ],
       ),
     );
   }
 }
-

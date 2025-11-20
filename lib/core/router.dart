@@ -1,7 +1,5 @@
-// lib/router/router.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:rextra_app/features/home/presentation/home_page.dart';
 
 // AUTH
 import '../features/auth/presentation/forgot_password_pages.dart';
@@ -11,10 +9,15 @@ import '../features/auth/presentation/register_page.dart';
 import '../features/auth/presentation/splash_page.dart';
 import '../features/auth/presentation/verify_email_page.dart';
 
+// HOME (sementara)
+import 'package:rextra_app/features/home/presentation/home_page.dart';
+
 // PERSONA (Flow 2)
-import '../features/kenalidiri/presentation/hasil_kenalidiri_page.dart';
-import '../features/kenalidiri/presentation/kenalidiri_pages.dart';
 import '../features/persona/presentation/persona_pages.dart';
+
+// KENALI DIRI
+import '../features/kenalidiri/presentation/kenalidiri_pages.dart';
+import '../features/kenalidiri/presentation/hasil_kenalidiri_page.dart';
 
 final router = GoRouter(
   initialLocation: '/splash',
@@ -38,25 +41,21 @@ final router = GoRouter(
     GoRoute(path: '/forgot', builder: (_, __) => const ForgotPasswordRequestPage()),
     GoRoute(
       path: '/forgot/sent',
-      builder: (_, s) =>
-          ForgotPasswordSentPage(email: s.uri.queryParameters['email'] ?? ''),
+      builder: (_, s) => ForgotPasswordSentPage(email: s.uri.queryParameters['email'] ?? ''),
     ),
     GoRoute(
       path: '/forgot/expired',
-      builder: (_, s) =>
-          ForgotPasswordExpiredPage(email: s.uri.queryParameters['email'] ?? ''),
+      builder: (_, s) => ForgotPasswordExpiredPage(email: s.uri.queryParameters['email'] ?? ''),
     ),
     GoRoute(
       path: '/forgot/new',
-      builder: (_, s) =>
-          NewPasswordPage(token: s.uri.queryParameters['token'] ?? ''),
+      builder: (_, s) => NewPasswordPage(token: s.uri.queryParameters['token'] ?? ''),
     ),
     GoRoute(path: '/forgot/success', builder: (_, __) => const PasswordResetSuccessPage()),
 
     // --- Persona (Flow 2) ---
     GoRoute(path: '/persona/welcome', builder: (_, __) => const PersonaWelcomePage()),
-    GoRoute(path: '/persona/info', builder: (_, __) => const PersonaInfoDetailPage()),
-
+    GoRoute(path: '/persona/info', builder:  (_, __) => const PersonaInfoDetailPage()),
     GoRoute(
       path: '/persona/step1',
       builder: (_, __) => const PersonaStepPage(
@@ -106,17 +105,15 @@ final router = GoRouter(
       },
     ),
 
-    // --- Sementara: placeholder Home (agar /home tidak "not found") ---
+    // --- Placeholder Home (sementara)
     GoRoute(path: '/home', builder: (_, __) => const HomePage()),
+
+    // --- Kenali Diri
     GoRoute(path: '/kenali', builder: (_, __) => const KenaliDiriInfoPage()),
     GoRoute(path: '/kenali/riasec-intro', builder: (_, __) => const RiasecIntroPage()),
-    GoRoute(path: '/kenali/ikigai-intro', builder: (_, __) => const IkigaiIntroPage()),
+    GoRoute(path: '/kenali/ikigai-intro', builder:  (_, __) => const IkigaiIntroPage()),
     GoRoute(path: '/kenali/riasec-test', builder: (_, __) => const RiasecTestPage()),
-    GoRoute(path: '/kenali/ikigai-test', builder: (_, __) => const IkigaiTestPage()),
-    GoRoute(
-      path: '/kenali/result',
-      builder: (_, __) => const HasilKenaliDiriPage(),
-    ),
-
+    GoRoute(path: '/kenali/ikigai-test', builder:  (_, __) => const IkigaiTestPage()),
+    GoRoute(path: '/kenali/result', builder: (_, __) => const HasilKenaliDiriPage()),
   ],
 );
