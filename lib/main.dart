@@ -26,7 +26,7 @@ final authBootstrapProvider = FutureProvider<bool>((ref) async {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  ApiClient.enableDebugSSLBypass();
   if (kIsWeb) setUrlStrategy(PathUrlStrategy());
 
   await SystemChrome.setPreferredOrientations([

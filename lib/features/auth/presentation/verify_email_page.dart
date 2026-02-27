@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../data/auth_service.dart';
-
-void safeBack(BuildContext context, {String fallback = '/auth/login'}) {
-  if (Navigator.of(context).canPop()) {
-    Navigator.of(context).pop();
-  } else {
-    context.go(fallback); // kalau tidak bisa pop, arahkan ke fallback
-  }
-}
+import 'verify_failed_dialog.dart';
 
 class VerifyEmailPage extends StatefulWidget {
-  final String mode; // sent | resent | expired
+  final String mode; // sent | expired | resent
   final String email;
-  const VerifyEmailPage({super.key, required this.mode, required this.email});
+
+  const VerifyEmailPage({
+    super.key,
+    required this.mode,
+    required this.email,
+  });
 
   @override
   State<VerifyEmailPage> createState() => _VerifyEmailPageState();
@@ -23,49 +21,22 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
   final _auth = AuthService();
   bool loading = false;
 
-  void _showFailedDialog() {
-    showDialog(
-      context: context,
-      builder: (_) => Dialog(
-        insetPadding: const EdgeInsets.all(24),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Image.asset('assets/images/notapproved.png', height: 96),
-              const SizedBox(height: 16),
-              const Text(
-                'Verifikasi Gagal Terkirim',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Permintaan verifikasi sudah diterima. Coba lagi setelah 1 jam agar tidak terdeteksi spam, dan cek email kamu setelahnya.',
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(onPressed: () => Navigator.pop(context), child: const Text('Kembali')),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Future<void> _resend() async {
     setState(() => loading = true);
     try {
       await _auth.resendVerification(widget.email);
+
       if (!mounted) return;
-      final emailQ = Uri.encodeQueryComponent(widget.email);
-      // pindah ke mode resent supaya copy sesuai UI
-      context.go('/verify?mode=resent&email=$emailQ');
-    } catch (e) {
+
+      context.go('/verify?mode=resent&email=${Uri.encodeQueryComponent(widget.email)}');
+    } catch (_) {
       if (!mounted) return;
-      _showFailedDialog();
+      showDialog(
+        context: context,
+        builder: (_) => VerifyFailedDialog(
+          onBack: () {},
+        ),
+      );
     } finally {
       if (mounted) setState(() => loading = false);
     }
@@ -76,122 +47,148 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
     final isExpired = widget.mode == 'expired';
     final isResent  = widget.mode == 'resent';
 
-    final String iconAsset = isExpired ? 'assets/images/rex41.png' : 'assets/images/rex51.png';
-    final String title, subtitle, primaryLabel;
+    String image;
+    String title;
+    String subtitle;
+    String primaryLabel;
+
     if (isExpired) {
-      title = 'Verifikasi Email Kadaluarsa';
-      subtitle = 'Maaf, tautan verifikasi sudah kadaluarsa. Klik tombol di bawah untuk mendapatkan tautan verifikasi terbaru.';
+      image = 'assets/images/TautanVerifikasiKadaluarsa.png';
+      title = 'Verifikasi Akun Gagal';
+      subtitle =
+      'Maaf, tautan verifikasi sudah kadaluarsa. '
+          'Klik tombol di bawah untuk mendapatkan tautan verifikasi terbaru.';
       primaryLabel = 'Kirim Verifikasi';
     } else if (isResent) {
+      image = 'assets/images/VerifikasiEmailUlang.png';
       title = 'Verifikasi Email Dikirim Ulang';
-      subtitle = 'Email verifikasi telah dikirim ulang ke ${widget.email}. Periksa kotak masuk/spam dan klik tautan dalam 24 jam sebelum kadaluarsa.';
+      subtitle =
+      'Kami telah mengirimkan email verifikasi ke ${widget.email}. '
+          'Periksa kotak masuk atau spam dan klik tautan dalam 24 jam sebelum kadaluarsa.';
       primaryLabel = 'Kirim Ulang Email';
     } else {
+      image = 'assets/images/VerifikasiEmail.png';
       title = 'Periksa Email Sekarang';
-      subtitle = 'Kami telah mengirimkan email verifikasi ke ${widget.email}. Periksa kotak masuk atau spam dan klik tautan dalam 24 jam sebelum kadaluarsa.';
+      subtitle =
+      'Kami telah mengirimkan email verifikasi ke ${widget.email}. '
+          'Periksa kotak masuk atau spam dan klik tautan dalam 24 jam sebelum kadaluarsa.';
       primaryLabel = 'Kirim Ulang Email';
     }
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
         leading: IconButton(
-          onPressed: () {
-            if (Navigator.of(context).canPop()) {
-              Navigator.of(context).pop();
-            } else {
-              context.go('/auth/login'); // fallback kalau tidak ada halaman sebelumnya
-            }
-          },
           icon: const Icon(Icons.arrow_back_ios_new),
+          onPressed: () => context.go('/auth/login'),
+        ),
+        title: Image.asset(
+          'assets/images/rextra.png',
+          height: 26,
         ),
       ),
-      backgroundColor: Colors.white,
-      body: LayoutBuilder(
-        builder: (context, cons) {
-          final w = MediaQuery.of(context).size.width;
-          final double panelH  = (w * 1.00).clamp(480.0, 570.0);
-          final double mascotW = panelH * 0.46;
-          final double textTop = panelH * 0.62;
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+          child: Column(
+            children: [
+              const SizedBox(height: 10),
 
-          return SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(
-                  width: w,
-                  height: panelH,
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Positioned.fill(
-                        child: Image.asset('assets/images/bgawanawan.png', fit: BoxFit.cover),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset(
+                      image,
+                      height: 260,
+                      fit: BoxFit.contain,
+                    ),
+                    const SizedBox(height: 28),
+                    Text(
+                      title,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
                       ),
-                      Align(
-                        alignment: const Alignment(-0.3, -0.50),
-                        child: Image.asset(iconAsset, width: mascotW * 1.2, fit: BoxFit.contain),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      subtitle,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        height: 1.5,
                       ),
-                      Positioned(
-                        left: 20, right: 20, top: textTop,
-                        child: Column(
-                          children: [
-                            Text(title,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 36, fontWeight: FontWeight.w900,
-                                height: 1.2, color: Color(0xFF102542),
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Text(subtitle,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 15, fontWeight: FontWeight.w600,
-                                height: 1.5, color: Color(0xFF2E3A4C),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                    ),
+                  ],
+                ),
+              ),
+
+              if (!isExpired) ...[
+                const Text(
+                  'Belum menerima tautan verifikasi?',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 22, 20, 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (!isExpired) ...[
-                        const Text('Belum menerima tautan verifikasi?',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-                      ElevatedButton(
-                        onPressed: loading ? null : _resend,
-                        child: loading
-                            ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2))
-                            : Text(primaryLabel),
-                      ),
-                      const SizedBox(height: 10),
-                      FilledButton(
-                        onPressed: () => context.go('/register'),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFFEAF1FF),
-                          foregroundColor: const Color(0xFF2E6BFF),
-                          minimumSize: const Size.fromHeight(52),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        ),
-                        child: const Text('Ganti Email'),
-                      ),
-                    ],
-                  ),
-                ),
+                const SizedBox(height: 18),
               ],
-            ),
-          );
-        },
+
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: ElevatedButton(
+                  onPressed: loading ? null : _resend,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1E4ED8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                  ),
+                  child: loading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : Text(
+                    primaryLabel,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: FilledButton(
+                  onPressed: () => context.go('/register'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFDDE7FF),
+                    foregroundColor: const Color(0xFF1E4ED8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                  ),
+                  child: const Text(
+                    'Ganti Email',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

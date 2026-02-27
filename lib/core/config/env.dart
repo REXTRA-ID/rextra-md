@@ -1,5 +1,3 @@
 class Env {
-  static const String host = 'http://165.101.18.15:8001/';
-  static const String basePath = '/api/v1';
-  static String get baseUrl => '$host$basePath';
+  static const String baseUrl = 'https://103.171.84.248/api/v1';
 }
