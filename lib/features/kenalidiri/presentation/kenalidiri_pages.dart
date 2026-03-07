@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../kenalidiri/data/kenalidiri_repository.dart';
-import '../../persona/presentation/persona_pages.dart';
 import '../data/models/ikigai_models.dart';
 import '../data/models/riasec_models.dart';
 
@@ -66,8 +65,8 @@ class _KenaliDiriInfoPageState extends State<KenaliDiriInfoPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(onPressed: () => PersonaStore.goToPersonaHome(context),
-            icon: const Icon(Icons.arrow_back_ios_new)),
+        // leading: IconButton(onPressed: () => PersonaStore.goToPersonaHome(context),
+        //     icon: const Icon(Icons.arrow_back_ios_new)),
         title: Image.asset('assets/images/rextra.png', height: 22),
         centerTitle: true,
         backgroundColor: Colors.white,
