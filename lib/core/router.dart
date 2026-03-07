@@ -13,6 +13,8 @@ import '../features/auth/presentation/verify_email_page.dart';
 import 'package:rextra_app/features/home/presentation/home_page.dart';
 
 // PERSONA (Flow 2)
+import '../features/kenalidiri/presentation/kenalidiri_history_page.dart';
+import '../features/kenalidiri/presentation/kenalidiri_home_page.dart';
 import '../features/persona/presentation/persona_pages.dart';
 
 // KENALI DIRI
@@ -109,11 +111,12 @@ final router = GoRouter(
     GoRoute(path: '/home', builder: (_, __) => const HomePage()),
 
     // --- Kenali Diri
-    GoRoute(path: '/kenali', builder: (_, __) => const KenaliDiriInfoPage()),
     GoRoute(path: '/kenali/riasec-intro', builder: (_, __) => const RiasecIntroPage()),
     GoRoute(path: '/kenali/ikigai-intro', builder:  (_, __) => const IkigaiIntroPage()),
     GoRoute(path: '/kenali/riasec-test', builder: (_, __) => const RiasecTestPage()),
     GoRoute(path: '/kenali/ikigai-test', builder:  (_, __) => const IkigaiTestPage()),
     GoRoute(path: '/kenali/result', builder: (_, __) => const HasilKenaliDiriPage()),
+    GoRoute(path: '/kenali', builder: (_, __) => const KenaliDiriHomePage()),
+    GoRoute(path: '/kenali/history', builder: (_, __) => const KenaliDiriHistoryPage()),
   ],
 );
