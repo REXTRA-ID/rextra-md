@@ -1,10 +1,5 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:rextra_app/features/persona/presentation/persona_info_page.dart';
-import 'package:rextra_app/features/persona/presentation/persona_intro_page.dart';
-import 'package:rextra_app/features/persona/presentation/persona_quistionarre_page.dart';
-import 'package:rextra_app/features/persona/presentation/persona_result_page.dart';
-import 'package:rextra_app/features/persona/presentation/persona_reveal_page.dart';
-import 'package:rextra_app/features/persona/presentation/persona_welcome_page.dart';
 
 // AUTH
 import '../features/auth/presentation/forgot_password_pages.dart';
@@ -18,14 +13,14 @@ import '../features/auth/presentation/verify_email_page.dart';
 import 'package:rextra_app/features/home/presentation/home_page.dart';
 
 // PERSONA (Flow 2)
-import '../features/kenalidiri/presentation/kenalidiri_history_page.dart';
-import '../features/kenalidiri/presentation/kenalidiri_home_page.dart';
 import '../features/persona/presentation/persona_pages.dart';
+
+// KENALI DIRI
 import '../features/kenalidiri/presentation/kenalidiri_pages.dart';
 import '../features/kenalidiri/presentation/hasil_kenalidiri_page.dart';
 
 final router = GoRouter(
-  initialLocation: '/persona/welcome',
+  initialLocation: '/splash',
   routes: [
     // --- Splash & onboarding ---
     GoRoute(path: '/splash', builder: (_, __) => const SplashPage()),
@@ -61,30 +56,64 @@ final router = GoRouter(
     // --- Persona (Flow 2) ---
     GoRoute(path: '/persona/welcome', builder: (_, __) => const PersonaWelcomePage()),
     GoRoute(path: '/persona/info', builder:  (_, __) => const PersonaInfoDetailPage()),
-    GoRoute(path: '/persona/intro', builder:  (_, __) => const PersonaIntroPage()),
     GoRoute(
-      path: '/persona/quistionnaire',
-      builder: (_, __) => const PersonaQuestionnairePage(),
+      path: '/persona/step1',
+      builder: (_, __) => const PersonaStepPage(
+        step: 1,
+        title: 'Tujuan Karier',
+        bannerAsset: 'assets/images/tujuan.png',
+        optYes: 'Iya, saya sudah punya',
+        optNo: 'Tidak, Saya belum punya',
+      ),
     ),
     GoRoute(
-      path: '/persona/reveal',
-      builder: (_, __) => const PersonaRevealPage(),
+      path: '/persona/step2',
+      builder: (_, s) {
+        final tujuan = (s.extra is Map && (s.extra as Map)['tujuan'] == true);
+        return PersonaStepPage(
+          step: 2,
+          title: 'Portofolio Karier',
+          bannerAsset: 'assets/images/porto.png',
+          optYes: 'Iya, saya sedang membangun portofolio',
+          optNo: 'Tidak, saya belum punya',
+          sebelumnyaTujuan: tujuan,
+        );
+      },
+    ),
+    GoRoute(
+      path: '/persona/step3',
+      builder: (_, s) {
+        final m = (s.extra is Map) ? s.extra as Map : {};
+        return PersonaStepPage(
+          step: 3,
+          title: 'Rekrutmen Kerja',
+          bannerAsset: 'assets/images/rekrutmen.png',
+          optYes: 'Iya, saya sedang ikut',
+          optNo: 'Tidak, saya belum ikut',
+          sebelumnyaTujuan: m['tujuan'] == true,
+          sebelumnyaPorto:  m['porto']  == true,
+        );
+      },
     ),
     GoRoute(
       path: '/persona/result',
-      builder: (_, __) => const PersonaResultPage(),
+      builder: (_, s) {
+        final type = (s.extra is Map && (s.extra as Map)['type'] is PersonaType)
+            ? (s.extra as Map)['type'] as PersonaType
+            : PersonaType.pathfinder;
+        return PersonaResultPage(type: type);
+      },
     ),
 
     // --- Placeholder Home (sementara)
     GoRoute(path: '/home', builder: (_, __) => const HomePage()),
 
     // --- Kenali Diri
+    GoRoute(path: '/kenali', builder: (_, __) => const KenaliDiriInfoPage()),
     GoRoute(path: '/kenali/riasec-intro', builder: (_, __) => const RiasecIntroPage()),
     GoRoute(path: '/kenali/ikigai-intro', builder:  (_, __) => const IkigaiIntroPage()),
     GoRoute(path: '/kenali/riasec-test', builder: (_, __) => const RiasecTestPage()),
     GoRoute(path: '/kenali/ikigai-test', builder:  (_, __) => const IkigaiTestPage()),
     GoRoute(path: '/kenali/result', builder: (_, __) => const HasilKenaliDiriPage()),
-    GoRoute(path: '/kenali', builder: (_, __) => const KenaliDiriHomePage()),
-    GoRoute(path: '/kenali/history', builder: (_, __) => const KenaliDiriHistoryPage()),
   ],
 );
