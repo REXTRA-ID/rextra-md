@@ -29,19 +29,23 @@ class KenaliDiriHomePage extends ConsumerWidget {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF3F4F6),
       appBar: _appBar(context),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.only(bottom: 20),
           children: [
+            const SizedBox(height: 6),
+
             Image.asset(
-              'assets/kenali_diri/BannerKenaliDiri.png',
+              'assets/images/kenali_diri/BannerKenaliDiri.png',
               width: double.infinity,
-              height: 180,
-              fit: BoxFit.cover,
+              fit: BoxFit.fitWidth,
+              alignment: Alignment.topCenter,
             ),
+
             const SizedBox(height: 18),
+
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: _MembershipCard(
@@ -49,18 +53,27 @@ class KenaliDiriHomePage extends ConsumerWidget {
                 tokenOwned: state.tokenOwned,
               ),
             ),
+
             const SizedBox(height: 24),
+
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
                   const Text(
                     'Asesmen Karier',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF111827),
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF1450E3),
                       borderRadius: BorderRadius.circular(999),
@@ -76,12 +89,17 @@ class KenaliDiriHomePage extends ConsumerWidget {
                   const Spacer(),
                   IconButton(
                     onPressed: () => _showInfoSheet(context),
-                    icon: const Icon(Icons.info_outline),
+                    icon: const Icon(
+                      Icons.info_outline,
+                      color: Color(0xFF4B5563),
+                    ),
                   ),
                 ],
               ),
             ),
+
             const SizedBox(height: 10),
+
             ...state.assessments.map(
                   (e) => Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
@@ -97,6 +115,7 @@ class KenaliDiriHomePage extends ConsumerWidget {
                 ),
               ),
             ),
+
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
               child: SizedBox(
@@ -108,6 +127,7 @@ class KenaliDiriHomePage extends ConsumerWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
+                    elevation: 0,
                   ),
                   child: const Text(
                     'Lihat Riwayat',
@@ -128,8 +148,8 @@ class KenaliDiriHomePage extends ConsumerWidget {
 
   PreferredSizeWidget _appBar(BuildContext context) {
     return AppBar(
-      backgroundColor: Colors.white,
-      surfaceTintColor: Colors.white,
+      backgroundColor: const Color(0xFFF3F4F6),
+      surfaceTintColor: const Color(0xFFF3F4F6),
       elevation: 0,
       centerTitle: true,
       leading: IconButton(
@@ -182,89 +202,100 @@ class _MembershipCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Image.asset(
-          isPro
-              ? 'assets/kenali_diri/Pro.png'
-              : 'assets/kenali_diri/Basic.png',
-          width: double.infinity,
-          fit: BoxFit.cover,
-        ),
-        Positioned(
-          left: 18,
-          top: 17,
-          child: Image.asset(
-            isPro
-                ? 'assets/kenali_diri/Group48098863.png'
-                : 'assets/kenali_diri/Group48098863.png',
-            width: 68,
-            height: 68,
+    return AspectRatio(
+      aspectRatio: 343 / 94,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(22),
+              child: Image.asset(
+                'assets/images/kenali_diri/StatusMembership.png',
+                fit: BoxFit.fill,
+              ),
+            ),
           ),
-        ),
-        Positioned(
-          left: 102,
-          top: 20,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Status Membership',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                isPro ? 'PRO - REXTRA CLUB' : 'BASIC - REXTRA CLUB',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 18,
-                ),
-              ),
-            ],
+
+          Positioned(
+            left: 14,
+            top: 10,
+            child: Image.asset(
+              isPro
+                  ? 'assets/images/kenali_diri/Pro.png'
+                  : 'assets/images/kenali_diri/Basic.png',
+              width: 76,
+              height: 76,
+              fit: BoxFit.contain,
+            ),
           ),
-        ),
-        Positioned(
-          right: 18,
-          top: 18,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              const Text(
-                'Token Dimiliki',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Image.asset(
-                    'assets/kenali_diri/Group48098863.png',
-                    width: 26,
-                    height: 26,
+
+          Positioned(
+            left: 100,
+            top: 22,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Status Membership',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11.5,
                   ),
-                  const SizedBox(width: 6),
-                  Text(
-                    '$tokenOwned',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 20,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  isPro ? 'PRO - REXTRA CLUB' : 'BASIC - REXTRA CLUB',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          Positioned(
+            right: 20,
+            top: 18,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                const Text(
+                  'Token Dimiliki',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11.5,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset(
+                      'assets/images/kenali_diri/Group48098863.png',
+                      width: 24,
+                      height: 24,
+                      fit: BoxFit.contain,
                     ),
-                  ),
-                ],
-              ),
-            ],
+                    const SizedBox(width: 6),
+                    Text(
+                      '$tokenOwned',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -312,7 +343,10 @@ class _AssessmentCard extends StatelessWidget {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: item.badge.color,
                         borderRadius: BorderRadius.circular(999),
@@ -328,17 +362,29 @@ class _AssessmentCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 10),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 7,
+                      ),
                       decoration: BoxDecoration(
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: const Color(0xFF1450E3), width: 1.5),
+                        border: Border.all(
+                          color: const Color(0xFF1450E3),
+                          width: 1.5,
+                        ),
                       ),
                       child: Row(
                         children: [
-                          Image.asset(
-                            'assets/kenali_diri/Group48098863.png',
+                          SizedBox(
                             width: 18,
                             height: 18,
+                            child: FittedBox(
+                              fit: BoxFit.contain,
+                              child: Image.asset(
+                                'assets/images/kenali_diri/Group48098863.png',
+                              ),
+                            ),
                           ),
                           const SizedBox(width: 6),
                           Text(
@@ -359,6 +405,7 @@ class _AssessmentCard extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w900,
+                    color: Color(0xFF111827),
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -367,6 +414,7 @@ class _AssessmentCard extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 14,
                     height: 1.5,
+                    color: Color(0xFF374151),
                   ),
                 ),
               ],
@@ -407,7 +455,7 @@ class _PersonaLockedPage extends StatelessWidget {
         children: [
           Positioned.fill(
             child: Image.asset(
-              'assets/kenali_diri/BackgroundAwan.png',
+              'assets/images/kenali_diri/BackgroundAwan.png',
               fit: BoxFit.cover,
             ),
           ),
@@ -416,7 +464,7 @@ class _PersonaLockedPage extends StatelessWidget {
             children: [
               const SizedBox(height: 18),
               Image.asset(
-                'assets/kenali_diri/PembatasanaksesfiturUntukPersona.png',
+                'assets/images/kenali_diri/PembatasanaksesfiturUntukPersona.png',
                 height: 300,
               ),
               const SizedBox(height: 12),
@@ -443,12 +491,19 @@ class _PersonaLockedPage extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Image.asset('assets/kenali_diri/school-sharp.png', width: 34, height: 34),
+                        Image.asset(
+                          'assets/images/kenali_diri/school-sharp.png',
+                          width: 34,
+                          height: 34,
+                        ),
                         const SizedBox(width: 12),
                         const Expanded(
                           child: Text(
                             'Simpan data pendidikan terkini dan terdahulu di fitur Jejak Studi',
-                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
                         ),
                         const Icon(Icons.arrow_forward_ios, color: Colors.grey),
@@ -458,7 +513,10 @@ class _PersonaLockedPage extends StatelessWidget {
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFFE5E7EB),
                             borderRadius: BorderRadius.circular(10),
@@ -489,11 +547,17 @@ class _PersonaLockedPage extends StatelessWidget {
                   onPressed: () {},
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1450E3),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                   child: const Text(
                     'Detail Progres Persona',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
@@ -540,7 +604,7 @@ class _MembershipLockedPage extends StatelessWidget {
         children: [
           Positioned.fill(
             child: Image.asset(
-              'assets/kenali_diri/BackgroundAwan.png',
+              'assets/images/kenali_diri/BackgroundAwan.png',
               fit: BoxFit.cover,
             ),
           ),
@@ -549,7 +613,7 @@ class _MembershipLockedPage extends StatelessWidget {
             children: [
               const SizedBox(height: 16),
               Image.asset(
-                'assets/kenali_diri/MascotRexiSenyumTipis1.png',
+                'assets/images/kenali_diri/MascotRexiSenyumTipis1.png',
                 height: 280,
               ),
               const SizedBox(height: 12),
@@ -582,11 +646,17 @@ class _MembershipLockedPage extends StatelessWidget {
                   onPressed: () {},
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1450E3),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                   child: const Text(
                     'Upgrade Membership',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
@@ -598,11 +668,17 @@ class _MembershipLockedPage extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     backgroundColor: Colors.white,
                     side: const BorderSide(color: Color(0xFFD1D5DB)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                   child: const Text(
                     'Lihat Hak Akses',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.black),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.black,
+                    ),
                   ),
                 ),
               ),
@@ -689,7 +765,9 @@ class _InfoBottomSheet extends StatelessWidget {
             const SizedBox(height: 8),
             const Align(
               alignment: Alignment.centerLeft,
-              child: Text('Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam dignissim posuere semper...'),
+              child: Text(
+                'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam dignissim posuere semper...',
+              ),
             ),
             const SizedBox(height: 14),
             _InfoChip(
@@ -699,7 +777,9 @@ class _InfoBottomSheet extends StatelessWidget {
             const SizedBox(height: 8),
             const Align(
               alignment: Alignment.centerLeft,
-              child: Text('Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam dignissim posuere semper...'),
+              child: Text(
+                'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam dignissim posuere semper...',
+              ),
             ),
             const SizedBox(height: 14),
             _InfoChip(
@@ -709,7 +789,9 @@ class _InfoBottomSheet extends StatelessWidget {
             const SizedBox(height: 8),
             const Align(
               alignment: Alignment.centerLeft,
-              child: Text('Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam dignissim posuere semper...'),
+              child: Text(
+                'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam dignissim posuere semper...',
+              ),
             ),
           ],
         ),
@@ -766,10 +848,9 @@ class _TokenNotEnoughSheet extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(18),
               child: Image.asset(
-                'assets/kenali_diri/berbagaibannerrextra-032.png',
+                'assets/images/kenali_diri/berbagaibannerrextra-032.png',
                 width: double.infinity,
-                height: 210,
-                fit: BoxFit.cover,
+                fit: BoxFit.fitWidth,
               ),
             ),
             const SizedBox(height: 18),

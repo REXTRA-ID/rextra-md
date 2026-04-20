@@ -77,7 +77,7 @@ class _KenaliDiriHistoryPageState extends ConsumerState<KenaliDiriHistoryPage>
       body: Column(
         children: [
           Image.asset(
-            'assets/kenali_diri/BannerKenaliDiri(1).png',
+            'assets/images/kenali_diri/BannerKenaliDiri(1).png',
             width: double.infinity,
             height: 180,
             fit: BoxFit.cover,
@@ -213,7 +213,7 @@ class _EmptyHistoryState extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 28, 16, 20),
       children: [
         Image.asset(
-          'assets/kenali_diri/Group48098852.png',
+          'assets/images/kenali_diri/Group48098852.png',
           height: 260,
         ),
         const SizedBox(height: 22),
@@ -305,7 +305,7 @@ class _HistoryCard extends StatelessWidget {
               ),
               const Spacer(),
               Image.asset(
-                'assets/kenali_diri/Group48098863.png',
+                'assets/images/kenali_diri/Group48098863.png',
                 width: 22,
                 height: 22,
               ),

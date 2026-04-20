@@ -119,7 +119,7 @@ class KenaliDiriController extends StateNotifier<KenaliDiriState> {
           tokenCost: 50,
           badge: AssessmentBadgeType.disarankan,
           category: AssessmentCategory.profilKarier,
-          bannerAsset: 'assets/kenali_diri/Rectangle34624559.png',
+          bannerAsset: 'assets/images/kenali_diri/Rectangle34624559.png',
         ),
         AssessmentItem(
           title: 'Tes Gaya Kerja',
@@ -128,7 +128,7 @@ class KenaliDiriController extends StateNotifier<KenaliDiriState> {
           tokenCost: 50,
           badge: AssessmentBadgeType.penguat,
           category: AssessmentCategory.gayaKerja,
-          bannerAsset: 'assets/kenali_diri/Frame1000004901.png',
+          bannerAsset: 'assets/images/kenali_diri/Frame1000004901.png',
         ),
       ],
       history: [
@@ -141,9 +141,9 @@ class KenaliDiriController extends StateNotifier<KenaliDiriState> {
           tab: HistoryTabType.selesai,
           category: AssessmentCategory.profilKarier,
           riasecAssets: [
-            'assets/kenali_diri/RIASECBLOCK.png',
-            'assets/kenali_diri/RIASECBLOCK(1).png',
-            'assets/kenali_diri/RIASECBLOCK(2).png',
+            'assets/images/kenali_diri/RIASECBLOCK.png',
+            'assets/images/kenali_diri/RIASECBLOCK(1).png',
+            'assets/images/kenali_diri/RIASECBLOCK(2).png',
           ],
         ),
         HistoryItem(
@@ -155,9 +155,9 @@ class KenaliDiriController extends StateNotifier<KenaliDiriState> {
           tab: HistoryTabType.selesai,
           category: AssessmentCategory.gayaKerja,
           riasecAssets: [
-            'assets/kenali_diri/RIASECBLOCK.png',
-            'assets/kenali_diri/RIASECBLOCK(1).png',
-            'assets/kenali_diri/RIASECBLOCK(2).png',
+            'assets/images/kenali_diri/RIASECBLOCK.png',
+            'assets/images/kenali_diri/RIASECBLOCK(1).png',
+            'assets/images/kenali_diri/RIASECBLOCK(2).png',
           ],
         ),
       ],
