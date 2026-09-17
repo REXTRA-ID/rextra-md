@@ -26,7 +26,7 @@ class ApiClient {
     ),
   )
     ..interceptors.addAll([
-      CookieManager(_cookieJar),
+      if (!kIsWeb) CookieManager(_cookieJar),
 
       /// Attach token otomatis
       InterceptorsWrapper(
@@ -82,7 +82,9 @@ class ApiClient {
   }
 
   static Future<void> clearCookies() async {
-    await _cookieJar.deleteAll();
+    if (!kIsWeb) {
+      await _cookieJar.deleteAll();
+    }
   }
 
   static Future<bool> ping() async {

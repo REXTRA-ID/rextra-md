@@ -12,6 +12,7 @@ import 'package:rextra_app/core/theme/app_typography.dart';
 import 'core/router.dart';
 import 'core/storage/secure_storage.dart';
 import 'core/network/api_client.dart';
+import 'firebase_options.dart';
 
 final authBootstrapProvider = FutureProvider<bool>((ref) async {
   final token = await AppSecureStorage.readToken();
@@ -34,7 +35,9 @@ void main() {
       DeviceOrientation.portraitDown,
     ]);
     
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
     runApp(
       const ProviderScope(
         child: RextraApp(),

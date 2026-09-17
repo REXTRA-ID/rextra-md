@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import '../../../core/network/api_client.dart';
 import 'models/riasec_models.dart';
 import 'models/ikigai_models.dart';
+import 'riasec_mock.dart';
 
 class ApiException implements Exception {
   final String message;
@@ -23,6 +24,9 @@ class KenaliDiriRepository {
   // VALIDASI
   // --------------------------------------------------------------------------
   Future<bool> validateHash(String code) async {
+    // CHEAT CODE BYPASS
+    if (code == 'rextra123') return true;
+
     final res = await _dio.post('/assesment/validate_hash', data: {'hash': code});
     if (res.data is Map) {
       final m = res.data as Map;
@@ -35,9 +39,8 @@ class KenaliDiriRepository {
   // RIASEC
   // --------------------------------------------------------------------------
   Future<List<RiasecQuestion>> getRiasecQuestions() async {
-    final res = await _dio.get('/assesment/test/riasec/question');
-    final data = res.data['data'];
-    final List list = data is List ? data : (data['riasec_questions'] ?? []);
+    // DEVELOPMENT BYPASS: Load from mock since MONGODB_BACKEND is unavailable
+    final List list = mockRiasecQuestions;
     final questions = list.map((e) => RiasecQuestion.fromJson(e)).toList();
 
     const order = {'R': 0, 'I': 1, 'A': 2, 'S': 3, 'E': 4, 'C': 5};

@@ -378,10 +378,7 @@ class _PersonaRevealPageState extends ConsumerState<PersonaRevealPage>
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 15.w),
             child: ElevatedButton(
-              // onPressed: _isFlipped
-              //     ? () => context.push('/persona/result')
-              //     : null,
-              onPressed: () {},
+              onPressed: () => context.push('/persona/result'),
               child: const Text('Lanjutkan'),
             ),
           ),
