@@ -65,8 +65,10 @@ class _KenaliDiriInfoPageState extends State<KenaliDiriInfoPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // leading: IconButton(onPressed: () => PersonaStore.goToPersonaHome(context),
-        //     icon: const Icon(Icons.arrow_back_ios_new)),
+        leading: IconButton(
+          onPressed: () => _safeBack(context, fallback: '/persona/result'),
+          icon: const Icon(Icons.arrow_back_ios_new),
+        ),
         title: Image.asset('assets/images/rextra.png', height: 22),
         centerTitle: true,
         backgroundColor: Colors.white,

@@ -6,15 +6,21 @@ enum PersonaType { pathfinder, builder, achiever }
 class Mission {
   final String title;
   final String iconAsset;
+  final String imageAsset;
   final int point;
   final bool done;
+  final bool isMandatory;
+  final String description;
   final VoidCallback? onTap;
 
   const Mission({
     required this.title,
     required this.iconAsset,
+    required this.imageAsset,
     required this.point,
     this.done = false,
+    this.isMandatory = true,
+    this.description = '',
     this.onTap,
   });
 }
