@@ -18,9 +18,9 @@ class PersonaResultPage extends ConsumerWidget {
 
   List<Mission> _missionsFor(PersonaType type, BuildContext context) {
     final imgs = [
-      'assets/images/simpan data pendidikan.png',
-      'assets/images/menetapkan tujuan karir.png',
-      'assets/images/jelajahi profesi digital.png',
+      'assets/images/mission_simpan_pendidikan.png',
+      'assets/images/mission_tujuan_karir.png',
+      'assets/images/mission_jelajahi_profesi.png',
     ];
     final m1 = Mission(title: 'Simpan Data Pendidikan Terkini & Terdahulu Dengan Jejak Studi', iconAsset: 'assets/images/pendidikan.png', imageAsset: imgs[0], point: 100, done: true, isMandatory: true, description: 'Misi wajib karena Jejak Studi menyimpan riwayat pendidikanmu, agar sistem bisa membantu persiapan karier selama kuliah dengan lebih tepat');
     final m2 = Mission(title: 'Menetapkan Tujuan Karier Dengan Tes Profil Karier di Fitur Kenali Diri', iconAsset: 'assets/images/rekomendasi.png', imageAsset: imgs[1], point: 100, isMandatory: true, description: 'Misi wajib karena tes profil karier memberi rekomendasi profesi awal agar tujuan karier lebih jelas dan langkah selanjutnya lebih terarah', onTap: () => context.go('/kenali'));
@@ -93,7 +93,7 @@ class PersonaResultPage extends ConsumerWidget {
                             width: 54, height: 54,
                             decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFF2E6BFF), width: 2.5)),
                             clipBehavior: Clip.antiAlias,
-                            child: Image.asset('assets/images/1 dari 4 misi wajib terselesaikan.png', fit: BoxFit.cover,
+                            child: Image.asset('assets/images/mission_progress_icon.png', fit: BoxFit.cover,
                                 errorBuilder: (_, __, ___) => Container(
                                   decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xFF1A56FF), Color(0xFF38BDF8)])),
                                   child: const Icon(Icons.person, color: Colors.white),
@@ -346,7 +346,7 @@ class _MissionTileState extends State<_MissionTile> {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Image.asset('assets/images/REXTRA KOIN.png', width: 16, height: 16, fit: BoxFit.contain,
+                                  Image.asset('assets/images/rextra_koin.png', width: 16, height: 16, fit: BoxFit.contain,
                                       errorBuilder: (_, __, ___) => const Icon(Icons.monetization_on, size: 14, color: Color(0xFFD97706))),
                                   const SizedBox(width: 4),
                                   Text('+ ${m.point}', style: _pp(12, FontWeight.w800, const Color(0xFFD97706))),
