@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../kenalidiri_controller.dart';
+import '../../../core/utils/nav_utils.dart';
 
 class KenaliDiriHomePage extends ConsumerWidget {
   const KenaliDiriHomePage({super.key});
@@ -154,7 +155,7 @@ class KenaliDiriHomePage extends ConsumerWidget {
       centerTitle: true,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back_ios_new),
-        onPressed: () => context.pop(),
+        onPressed: () => popOrGo(context, '/home'),
       ),
       title: const Text(
         'KENALI DIRI',
@@ -440,7 +441,7 @@ class _PersonaLockedPage extends StatelessWidget {
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new),
-          onPressed: () => context.pop(),
+          onPressed: () => popOrGo(context, '/home'),
         ),
         title: const Text(
           'KENALI DIRI',
@@ -589,7 +590,7 @@ class _MembershipLockedPage extends StatelessWidget {
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new),
-          onPressed: () => context.pop(),
+          onPressed: () => popOrGo(context, '/home'),
         ),
         title: const Text(
           'KENALI DIRI',

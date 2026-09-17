@@ -84,7 +84,7 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new),
-          onPressed: () => context.go('/auth/login'),
+          onPressed: () => context.go('/login'),
         ),
         title: Image.asset(
           'assets/images/rextra.png',
@@ -163,29 +163,30 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
                 ),
               ),
 
-              const SizedBox(height: 14),
-
-              SizedBox(
-                width: double.infinity,
-                height: 54,
-                child: FilledButton(
-                  onPressed: () => context.go('/register'),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFDDE7FF),
-                    foregroundColor: const Color(0xFF1E4ED8),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
+              if (!isExpired) ...[
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  height: 54,
+                  child: FilledButton(
+                    onPressed: () => context.go('/register'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFFDDE7FF),
+                      foregroundColor: const Color(0xFF1E4ED8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
                     ),
-                  ),
-                  child: const Text(
-                    'Ganti Email',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
+                    child: const Text(
+                      'Ganti Email',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
                 ),
-              ),
+              ],
             ],
           ),
         ),

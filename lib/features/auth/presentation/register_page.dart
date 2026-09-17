@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../auth/data/auth_service.dart';
+import '../../../core/utils/nav_utils.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -14,6 +15,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
   final nameC = TextEditingController();
   final emailC = TextEditingController();
+  final phoneC = TextEditingController();
   final passC = TextEditingController();
   final confirmC = TextEditingController();
 
@@ -28,6 +30,7 @@ class _RegisterPageState extends State<RegisterPage> {
   void dispose() {
     nameC.dispose();
     emailC.dispose();
+    phoneC.dispose();
     passC.dispose();
     confirmC.dispose();
     super.dispose();
@@ -44,6 +47,14 @@ class _RegisterPageState extends State<RegisterPage> {
   String? _passwordValidator(String? v) {
     final s = v ?? '';
     if (s.length < 8) return 'Minimal 8 karakter';
+    return null;
+  }
+
+  String? _phoneValidator(String? v) {
+    final s = (v ?? '').trim();
+    if (s.isEmpty) return 'Nomor HP wajib diisi';
+    final ok = RegExp(r'^[0-9+()\-\s]{8,}$').hasMatch(s);
+    if (!ok) return 'Format nomor HP tidak valid';
     return null;
   }
 
@@ -69,8 +80,8 @@ class _RegisterPageState extends State<RegisterPage> {
       await _auth.register(
         fullname: nameC.text.trim(),
         email: emailC.text.trim(),
-        password: passC.text.trim(), phone: '',
-        // phone: '', // UI baru tidak ada field HP.
+        password: passC.text.trim(),
+        phone: phoneC.text.trim(),
       );
 
       final email = Uri.encodeQueryComponent(emailC.text.trim());
@@ -140,7 +151,7 @@ class _RegisterPageState extends State<RegisterPage> {
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black87),
-          onPressed: () => context.pop(),
+          onPressed: () => popOrGo(context, '/onboarding'),
         ),
         title: Image.asset('assets/images/rextra.png', height: 24),
       ),
@@ -202,6 +213,17 @@ class _RegisterPageState extends State<RegisterPage> {
                 textInputAction: TextInputAction.next,
                 decoration: _inputDecoration('Masukkan email anda'),
                 validator: _emailValidator,
+              ),
+              const SizedBox(height: 18),
+
+              _fieldLabel('Nomor HP'),
+              TextFormField(
+                controller: phoneC,
+                enabled: !loading,
+                keyboardType: TextInputType.phone,
+                textInputAction: TextInputAction.next,
+                decoration: _inputDecoration('Masukkan nomor HP anda'),
+                validator: _phoneValidator,
               ),
               const SizedBox(height: 18),
 
@@ -289,7 +311,7 @@ class _RegisterPageState extends State<RegisterPage> {
               SizedBox(
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: loading ? null : _submit,
+                  onPressed: (loading || !agree) ? null : _submit,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryBlue,
                     disabledBackgroundColor: primaryBlue.withOpacity(0.6),

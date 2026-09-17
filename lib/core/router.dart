@@ -22,9 +22,10 @@ import 'package:rextra_app/features/home/presentation/home_page.dart';
 // KENALI DIRI
 import '../features/kenalidiri/presentation/kenalidiri_pages.dart';
 import '../features/kenalidiri/presentation/hasil_kenalidiri_page.dart';
+import '../features/kenalidiri/presentation/kenalidiri_history_page.dart';
 
 final router = GoRouter(
-  initialLocation: '/persona/welcome',
+  initialLocation: '/splash',
   routes: [
     // --- Splash & onboarding ---
     GoRoute(path: '/splash', builder: (_, __) => const SplashPage()),
@@ -132,5 +133,6 @@ final router = GoRouter(
     GoRoute(path: '/kenali/riasec-test', builder: (_, __) => const RiasecTestPage()),
     GoRoute(path: '/kenali/ikigai-test', builder:  (_, __) => const IkigaiTestPage()),
     GoRoute(path: '/kenali/result', builder: (_, __) => const HasilKenaliDiriPage()),
+    GoRoute(path: '/kenali/history', builder: (_, __) => const KenaliDiriHistoryPage()),
   ],
 );

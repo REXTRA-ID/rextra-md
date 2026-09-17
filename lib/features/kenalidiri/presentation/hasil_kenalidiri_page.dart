@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-
 // >>> SESUAIKAN PATH DENGAN STRUKTUR PROYEKMU <<<
 import '../data/kenalidiri_repository.dart';
 import '../data/models/ikigai_models.dart';
+import '../../../core/utils/nav_utils.dart';
 
 const _assetBgHasil = 'assets/images/bg_hasil.png';
 
@@ -67,7 +66,7 @@ class _HasilKenaliDiriPageState extends State<HasilKenaliDiriPage> {
   Widget build(BuildContext context) {
     final appBar = AppBar(
       leading: IconButton(
-        onPressed: () => context.pop(),
+        onPressed: () => popOrGo(context, '/kenali'),
         icon: const Icon(Icons.arrow_back_ios_new),
       ),
       title: Image.asset('assets/images/rextra.png', height: 22),

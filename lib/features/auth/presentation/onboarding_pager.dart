@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -18,20 +19,45 @@ class _OnboardingPagerState extends State<OnboardingPager> {
     'assets/images/background3.png',
   ];
 
+  // Rasio asli (lebar/tinggi) tiap gambar, supaya bisa ditampilkan utuh
+  // tanpa terpotong lewat AspectRatio.
+  final _imageRatios = const [
+    1206 / 1426,
+    1188 / 1426,
+    1188 / 1426,
+  ];
+
+  Timer? _autoSlideTimer;
+
   final _titles = const [
     'Buat Rencana Karier Yang\nMudah dan Praktis',
+    'Dapatkan Informasi Ekosistem\nPersiapan Karier',
     'Tingkatkan Peluang Lolos\nSeleksi Rekrutmen Kerja',
-    'Catat Kegiatan Pendukung\nCapaian Karir Digital',
   ];
 
   final _subtitles = const [
     'Rencanakan tujuan karir kamu dengan lebih jelas dan terarah menggunakan teknologi AI dari REXTRA yang terpersonalisasi.',
-    'Persiapkan CV terbaik, latihan interview, dan mentoring dari para expert untuk meningkatkan peluang lolos seleksi.',
     'Catat semua kegiatan yang mendukung tujuan karir kamu dan dapatkan rekomendasi kegiatan yang relevan.',
+    'Persiapkan CV terbaik, latihan interview, dan mentoring dari para expert untuk meningkatkan peluang lolos seleksi.',
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _autoSlideTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (!_controller.hasClients) return;
+      final next = (_index + 1) % _images.length;
+      _controller.animateToPage(
+        next,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  @override
   void dispose() {
+    _autoSlideTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -52,16 +78,29 @@ class _OnboardingPagerState extends State<OnboardingPager> {
                 itemBuilder: (_, i) {
                   return Stack(
                     children: [
-                      // background putih
-                      const Positioned.fill(child: ColoredBox(color: Colors.white)),
+                      // background gradient menyatu dengan warna ilustrasi,
+                      // jadi tidak ada celah putih di sisa ruang
+                      const Positioned.fill(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [Color(0xFF0B4FDB), Color(0xFF23DCE1)],
+                            ),
+                          ),
+                        ),
+                      ),
 
-                      // gambar ilustrasi bagian atas (fitWidth)
+                      // gambar ilustrasi ditampilkan utuh (tidak terpotong)
                       Align(
                         alignment: Alignment.topCenter,
-                        child: Image.asset(
-                          _images[i],
-                          fit: BoxFit.fitWidth,
-                          width: double.infinity,
+                        child: AspectRatio(
+                          aspectRatio: _imageRatios[i],
+                          child: Image.asset(
+                            _images[i],
+                            fit: BoxFit.contain,
+                          ),
                         ),
                       ),
 

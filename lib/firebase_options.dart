@@ -41,13 +41,13 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBZ4jVAO-UwDnrLMB4MjS21J9R8wmG4bm4',
-    appId: '1:176034778877:web:508c825db61d3375147894',
-    messagingSenderId: '176034778877',
-    projectId: 'try-oauth-73caf',
-    authDomain: 'try-oauth-73caf.firebaseapp.com',
-    storageBucket: 'try-oauth-73caf.firebasestorage.app',
-    measurementId: 'G-YK4K900XWH',
+    apiKey: 'AIzaSyCwDshNotZAh_V7jw0lxBFRK6qHvpU5AdU',
+    appId: '1:1012605951105:web:f9c567b288985bf4940180',
+    messagingSenderId: '1012605951105',
+    projectId: 'rextra-environment',
+    authDomain: 'rextra-environment.firebaseapp.com',
+    storageBucket: 'rextra-environment.firebasestorage.app',
+    measurementId: 'G-HZXEH92G3F',
   );
 
   static const FirebaseOptions android = FirebaseOptions(

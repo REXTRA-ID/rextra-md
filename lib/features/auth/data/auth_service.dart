@@ -150,7 +150,7 @@ class AuthService {
   Future<void> resendVerification(String email) async {
     try {
       final res = await _dio.post(
-        '/auth/resend',
+        '/auth/send-email',
         data: {'email': email},
         options: Options(validateStatus: (s) => s != null && s < 600),
       );

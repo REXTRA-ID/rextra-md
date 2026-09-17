@@ -42,7 +42,7 @@ class _HomePageState extends State<HomePage> {
         children: [
           // ===== TOP PROFILE BANNER =====
           _ProfileBanner(
-            onTapCta: () => context.go('/kenali/info'),
+            onTapCta: () => context.go('/kenali'),
           ),
 
           const SizedBox(height: 16),

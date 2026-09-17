@@ -116,6 +116,7 @@ class _PersonaRevealPageState extends ConsumerState<PersonaRevealPage>
         ),
       ),
       body: Stack(
+        fit: StackFit.expand,
         children: [
           // 1. LAYER BACKGROUND FULL
           Positioned.fill(
@@ -127,7 +128,7 @@ class _PersonaRevealPageState extends ConsumerState<PersonaRevealPage>
 
           // 2. LAYER KARTU ANIMASI
           SafeArea(
-            child: Center(
+            child: SingleChildScrollView(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -205,9 +206,10 @@ class _PersonaRevealPageState extends ConsumerState<PersonaRevealPage>
   // ==========================================
 
   Widget _buildFrontCardPlaceholder() {
+    final screenSize = MediaQuery.of(context).size;
     return Container(
-      width: 331.w,
-      height: 557.h,
+      width: screenSize.width * 0.87,
+      height: screenSize.height * 0.68,
       padding: EdgeInsets.symmetric(horizontal: 35.w),
       decoration: BoxDecoration(
           gradient: const LinearGradient(
@@ -274,7 +276,7 @@ class _PersonaRevealPageState extends ConsumerState<PersonaRevealPage>
       //     style: TextStyle(color: Colors.white, fontSize: 18.sp),
       //   ),
       // ),
-      width: 331.w,
+      width: MediaQuery.of(context).size.width * 0.87,
       // height: 557.h,
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 30.h),
       decoration: BoxDecoration(

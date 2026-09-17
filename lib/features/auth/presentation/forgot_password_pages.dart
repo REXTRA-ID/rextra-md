@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../data/auth_service.dart';
+import '../../../core/utils/nav_utils.dart';
 
 class _AuthUi {
   static const primaryBlue = Color(0xFF1E4ED8);
@@ -56,7 +57,7 @@ class _AuthUi {
       centerTitle: true,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back_ios_new),
-        onPressed: () => context.pop(),
+        onPressed: () => popOrGo(context, '/login'),
       ),
       title: Image.asset('assets/images/rextra.png', height: 26),
     );
