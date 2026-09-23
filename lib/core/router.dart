@@ -13,6 +13,7 @@ import '../features/auth/presentation/onboarding_pager.dart';
 import '../features/auth/presentation/register_page.dart';
 import '../features/auth/presentation/splash_page.dart';
 import '../features/auth/presentation/verify_email_page.dart';
+import '../features/auth/presentation/verification_result_page.dart';
 
 // HOME (sementara)
 import 'package:rextra_app/features/home/presentation/home_page.dart';
@@ -39,6 +40,12 @@ final router = GoRouter(
       builder: (ctx, s) => VerifyEmailPage(
         email: s.uri.queryParameters['email'] ?? '',
         mode: s.uri.queryParameters['mode'] ?? 'sent', // sent|resent|expired
+      ),
+    ),
+    GoRoute(
+      path: '/verifikasi-akun',
+      builder: (ctx, s) => VerificationResultPage(
+        token: s.uri.queryParameters['token'] ?? '',
       ),
     ),
 
