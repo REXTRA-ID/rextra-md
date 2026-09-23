@@ -1,3 +1,6 @@
 class Env {
-  static const String baseUrl = 'http://localhost:8080/api/v1';
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://localhost:8080/api/v1',
+  );
 }
