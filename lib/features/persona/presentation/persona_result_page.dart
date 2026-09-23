@@ -11,11 +11,6 @@ TextStyle _pp(double size, FontWeight weight, Color color) =>
 class PersonaResultPage extends ConsumerWidget {
   const PersonaResultPage({super.key});
 
-  void _popOrGo(BuildContext context, String fallbackPath) {
-    if (GoRouter.of(context).canPop()) context.pop();
-    else context.go(fallbackPath);
-  }
-
   List<Mission> _missionsFor(PersonaType type, BuildContext context) {
     final imgs = [
       'assets/images/mission_simpan_pendidikan.png',
@@ -60,7 +55,7 @@ class PersonaResultPage extends ConsumerWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        leading: IconButton(onPressed: () => _popOrGo(context, '/persona/welcome'), icon: const Icon(Icons.arrow_back_ios_new)),
+        automaticallyImplyLeading: false,
         title: Image.asset('assets/images/rextra.png', height: 22),
         centerTitle: true,
         backgroundColor: Colors.white,

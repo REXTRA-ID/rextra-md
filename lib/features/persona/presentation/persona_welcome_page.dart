@@ -7,23 +7,12 @@ import 'package:rextra_app/core/theme/app_typography.dart';
 class PersonaWelcomePage extends StatelessWidget {
   const PersonaWelcomePage({super.key});
 
-  void _popOrGo(BuildContext context, String fallbackPath) {
-    if (GoRouter.of(context).canPop()) {
-      context.pop();
-    } else {
-      context.go(fallbackPath);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        leading: IconButton(
-          onPressed: () => _popOrGo(context, '/login'),
-          icon: const Icon(Icons.arrow_back_ios_new),
-        ),
+        automaticallyImplyLeading: false,
         title: Image.asset('assets/images/rextra.png', height: 22.h),
         centerTitle: true,
         backgroundColor: Colors.white,
@@ -57,7 +46,6 @@ class PersonaWelcomePage extends StatelessWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-
                           Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -67,8 +55,16 @@ class PersonaWelcomePage extends StatelessWidget {
                                 height: 103.05.h,
                                 fit: BoxFit.contain,
                               ),
-                              Text('Selamat Datang,', style: AppTypography.h5.copyWith(color: Colors.white), textAlign: TextAlign.center,),
-                              Text('Sobat REXTRA!', style: AppTypography.h3.copyWith(color: Colors.white), textAlign: TextAlign.center),
+                              Text(
+                                'Selamat Datang,',
+                                style: AppTypography.h5
+                                    .copyWith(color: Colors.white),
+                                textAlign: TextAlign.center,
+                              ),
+                              Text('Sobat REXTRA!',
+                                  style: AppTypography.h3
+                                      .copyWith(color: Colors.white),
+                                  textAlign: TextAlign.center),
                             ],
                           ),
                           Image.asset(

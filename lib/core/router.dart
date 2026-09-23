@@ -14,6 +14,7 @@ import '../features/auth/presentation/register_page.dart';
 import '../features/auth/presentation/splash_page.dart';
 import '../features/auth/presentation/verify_email_page.dart';
 import '../features/auth/presentation/verification_result_page.dart';
+import 'storage/secure_storage.dart';
 
 // HOME (sementara)
 import 'package:rextra_app/features/home/presentation/home_page.dart';
@@ -25,8 +26,26 @@ import '../features/kenalidiri/presentation/kenalidiri_pages.dart';
 import '../features/kenalidiri/presentation/hasil_kenalidiri_page.dart';
 import '../features/kenalidiri/presentation/kenalidiri_history_page.dart';
 
+// Halaman yang tidak boleh diakses lagi kalau sesi login masih aktif —
+// mencegah user "kembali" ke sini lewat tombol back browser setelah login.
+const _authOnlyPaths = <String>{
+  '/splash',
+  '/onboarding',
+  '/login',
+  '/register',
+};
+
 final router = GoRouter(
   initialLocation: '/splash',
+  redirect: (context, state) async {
+    final token = await AppSecureStorage.readToken();
+    final isLoggedIn = token != null && token.isNotEmpty;
+
+    if (isLoggedIn && _authOnlyPaths.contains(state.matchedLocation)) {
+      return '/home';
+    }
+    return null;
+  },
   routes: [
     // --- Splash & onboarding ---
     GoRoute(path: '/splash', builder: (_, __) => const SplashPage()),

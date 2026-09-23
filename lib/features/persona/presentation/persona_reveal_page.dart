@@ -77,126 +77,120 @@ class _PersonaRevealPageState extends ConsumerState<PersonaRevealPage>
     final personaState = ref.watch(personaProvider);
     final resultType = personaState.finalPersona ?? PersonaType.pathfinder;
 
-    void _popOrGo(BuildContext context, String fallbackPath) {
-      if (GoRouter.of(context).canPop()) {
-        context.pop();
-      } else {
-        context.go(fallbackPath);
-      }
-    }
-
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        elevation: 2,
-        shadowColor: Colors.black.withOpacity(0.1),
-        leading: IconButton(
-          onPressed: () => _popOrGo(context, '/persona/quistionnaire'),
-          icon: const Icon(Icons.arrow_back_ios_new),
-        ),
-        centerTitle: true,
+    return PopScope(
+      // Setelah kartu dibuka (di-flip), user tidak boleh kembali ke
+      // halaman pertanyaan-pertanyaan sebelumnya.
+      canPop: !_isFlipped,
+      child: Scaffold(
         backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        title: ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppColors.blueTop,
-              AppColors.blueBottom,
-            ],
-          ).createShader(bounds),
-          child: Text(
-            'PERSONA REXTRA',
-            style: AppTypography.h5.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ),
-      ),
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          // 1. LAYER BACKGROUND FULL
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/persona-reveal-bg.png',
-              fit: BoxFit.cover,
-            ),
-          ),
-
-          // 2. LAYER KARTU ANIMASI
-          SafeArea(
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Animasi Muncul dari Bawah (Slide)
-                  SlideTransition(
-                    position: _slideAnimation,
-                    child: GestureDetector(
-                      onTap: _onCardTap,
-                      child: AnimatedBuilder(
-                        animation: _flipController,
-                        builder: (context, child) {
-                          final flipAngle = _flipAnimation.value *
-                              pi; // Rotasi Y 0 -> 180 deg
-                          final tiltAngle =
-                              _tiltAnimation.value; // Rotasi Z -2 -> 2 deg
-
-                          // Deteksi kapan kartu harus berganti wujud (saat diputar setengah jalan)
-                          final isFrontVisible = flipAngle < (pi / 2);
-
-                          // Efek Perspektif 3D
-                          final matrix = Matrix4.identity()
-                            ..setEntry(3, 2, 0.0015)
-                            ..rotateY(flipAngle);
-
-                          return Transform.rotate(
-                            angle: tiltAngle, // Eksekusi kemiringan
-                            child: Transform(
-                              transform: matrix, // Eksekusi putaran (Flip)
-                              alignment: Alignment.center,
-                              child: isFrontVisible
-                                  ? _buildFrontCardPlaceholder()
-                                  : Transform(
-                                      // Membalik konten belakang agar tidak terbalik seperti cermin (mirror)
-                                      transform: Matrix4.identity()
-                                        ..rotateY(pi),
-                                      alignment: Alignment.center,
-                                      child:
-                                          _buildBackCardPlaceholder(resultType),
-                                    ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: 32.h),
-
-                  // 3. LAYER TOMBOL LANJUTKAN (Akan muncul setelah animasi flip selesai)
-                  // AnimatedOpacity(
-                  //   opacity: _isFlipped ? 1.0 : 0.0,
-                  //   duration: const Duration(milliseconds: 600),
-                  //   child: Padding(
-                  //     padding: EdgeInsets.symmetric(horizontal: 40.w),
-                  //     child: ElevatedButton(
-                  //       // Navigasi ke halaman detail persona
-                  //       onPressed: _isFlipped
-                  //           ? () => context.push('/persona/result')
-                  //           : null,
-                  //       child: const Text('Lanjutkan'),
-                  //     ),
-                  //   ),
-                  // ),
-                ],
+        appBar: AppBar(
+          elevation: 2,
+          shadowColor: Colors.black.withOpacity(0.1),
+          automaticallyImplyLeading: false,
+          centerTitle: true,
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+          title: ShaderMask(
+            shaderCallback: (bounds) => const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppColors.blueTop,
+                AppColors.blueBottom,
+              ],
+            ).createShader(bounds),
+            child: Text(
+              'PERSONA REXTRA',
+              style: AppTypography.h5.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
               ),
             ),
           ),
-        ],
+        ),
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            // 1. LAYER BACKGROUND FULL
+            Positioned.fill(
+              child: Image.asset(
+                'assets/images/persona-reveal-bg.png',
+                fit: BoxFit.cover,
+              ),
+            ),
+
+            // 2. LAYER KARTU ANIMASI
+            SafeArea(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Animasi Muncul dari Bawah (Slide)
+                    SlideTransition(
+                      position: _slideAnimation,
+                      child: GestureDetector(
+                        onTap: _onCardTap,
+                        child: AnimatedBuilder(
+                          animation: _flipController,
+                          builder: (context, child) {
+                            final flipAngle = _flipAnimation.value *
+                                pi; // Rotasi Y 0 -> 180 deg
+                            final tiltAngle =
+                                _tiltAnimation.value; // Rotasi Z -2 -> 2 deg
+
+                            // Deteksi kapan kartu harus berganti wujud (saat diputar setengah jalan)
+                            final isFrontVisible = flipAngle < (pi / 2);
+
+                            // Efek Perspektif 3D
+                            final matrix = Matrix4.identity()
+                              ..setEntry(3, 2, 0.0015)
+                              ..rotateY(flipAngle);
+
+                            return Transform.rotate(
+                              angle: tiltAngle, // Eksekusi kemiringan
+                              child: Transform(
+                                transform: matrix, // Eksekusi putaran (Flip)
+                                alignment: Alignment.center,
+                                child: isFrontVisible
+                                    ? _buildFrontCardPlaceholder()
+                                    : Transform(
+                                        // Membalik konten belakang agar tidak terbalik seperti cermin (mirror)
+                                        transform: Matrix4.identity()
+                                          ..rotateY(pi),
+                                        alignment: Alignment.center,
+                                        child: _buildBackCardPlaceholder(
+                                            resultType),
+                                      ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(height: 32.h),
+
+                    // 3. LAYER TOMBOL LANJUTKAN (Akan muncul setelah animasi flip selesai)
+                    // AnimatedOpacity(
+                    //   opacity: _isFlipped ? 1.0 : 0.0,
+                    //   duration: const Duration(milliseconds: 600),
+                    //   child: Padding(
+                    //     padding: EdgeInsets.symmetric(horizontal: 40.w),
+                    //     child: ElevatedButton(
+                    //       // Navigasi ke halaman detail persona
+                    //       onPressed: _isFlipped
+                    //           ? () => context.push('/persona/result')
+                    //           : null,
+                    //       child: const Text('Lanjutkan'),
+                    //     ),
+                    //   ),
+                    // ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -376,7 +370,9 @@ class _PersonaRevealPageState extends ConsumerState<PersonaRevealPage>
               textAlign: TextAlign.justify,
             ),
           ),
-          SizedBox(height: 15.h,),
+          SizedBox(
+            height: 15.h,
+          ),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 15.w),
             child: ElevatedButton(

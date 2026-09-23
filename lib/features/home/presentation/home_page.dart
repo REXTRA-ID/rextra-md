@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'profile_tab_view.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -37,46 +38,48 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
 
-      body: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          // ===== TOP PROFILE BANNER =====
-          _ProfileBanner(
-            onTapCta: () => context.go('/kenali'),
-          ),
-
-          const SizedBox(height: 16),
-
-          // ===== HORIZ SCROLLER CARD (placeholder) =====
-          SizedBox(
-            height: 140,
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              scrollDirection: Axis.horizontal,
-              itemCount: 5,
-              separatorBuilder: (_, __) => const SizedBox(width: 12),
-              itemBuilder: (context, i) => Container(
-                width: 180,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F4F9),
-                  borderRadius: BorderRadius.circular(14),
+      body: navIndex == 4
+          ? const ProfileTabView()
+          : ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                // ===== TOP PROFILE BANNER =====
+                _ProfileBanner(
+                  onTapCta: () => context.go('/kenali'),
                 ),
-              ),
-            ),
-          ),
 
-          const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
-          // CTA besar – Mulai Kenali Diri
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
-            child: ElevatedButton(
-              onPressed: () => context.go('/kenali'),
-              child: const Text('Mulai Kenali Diri'),
+                // ===== HORIZ SCROLLER CARD (placeholder) =====
+                SizedBox(
+                  height: 140,
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    scrollDirection: Axis.horizontal,
+                    itemCount: 5,
+                    separatorBuilder: (_, __) => const SizedBox(width: 12),
+                    itemBuilder: (context, i) => Container(
+                      width: 180,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F4F9),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // CTA besar – Mulai Kenali Diri
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+                  child: ElevatedButton(
+                    onPressed: () => context.go('/kenali'),
+                    child: const Text('Mulai Kenali Diri'),
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
 
       // ===== BOTTOM NAV (dummy) =====
       bottomNavigationBar: SafeArea(
