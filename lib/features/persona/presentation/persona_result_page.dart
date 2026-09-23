@@ -1,15 +1,29 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../domain/persona_models.dart';
 import 'providers/persona_provider.dart';
 
 // Shared text style helper with Poppins
-TextStyle _pp(double size, FontWeight weight, Color color) =>
-    TextStyle(fontFamily: 'Poppins', fontSize: size, fontWeight: weight, color: color);
+TextStyle _pp(double size, FontWeight weight, Color color) => TextStyle(
+    fontFamily: 'Poppins', fontSize: size, fontWeight: weight, color: color);
 
-class PersonaResultPage extends ConsumerWidget {
+class PersonaResultPage extends ConsumerStatefulWidget {
   const PersonaResultPage({super.key});
+
+  @override
+  ConsumerState<PersonaResultPage> createState() => _PersonaResultPageState();
+}
+
+class _PersonaResultPageState extends ConsumerState<PersonaResultPage> {
+  @override
+  void initState() {
+    super.initState();
+    // Refresh progres misi dari backend tiap kali halaman ini dibuka,
+    // supaya statusnya selalu sesuai data yang benar-benar tersimpan.
+    Future.microtask(
+        () => ref.read(personaProvider.notifier).fetchExistingPersona());
+  }
 
   List<Mission> _missionsFor(PersonaType type, BuildContext context) {
     final imgs = [
@@ -17,24 +31,78 @@ class PersonaResultPage extends ConsumerWidget {
       'assets/images/mission_tujuan_karir.png',
       'assets/images/mission_jelajahi_profesi.png',
     ];
-    final m1 = Mission(title: 'Simpan Data Pendidikan Terkini & Terdahulu Dengan Jejak Studi', iconAsset: 'assets/images/pendidikan.png', imageAsset: imgs[0], point: 100, done: true, isMandatory: true, description: 'Misi wajib karena Jejak Studi menyimpan riwayat pendidikanmu, agar sistem bisa membantu persiapan karier selama kuliah dengan lebih tepat');
-    final m2 = Mission(title: 'Menetapkan Tujuan Karier Dengan Tes Profil Karier di Fitur Kenali Diri', iconAsset: 'assets/images/rekomendasi.png', imageAsset: imgs[1], point: 100, isMandatory: true, description: 'Misi wajib karena tes profil karier memberi rekomendasi profesi awal agar tujuan karier lebih jelas dan langkah selanjutnya lebih terarah', onTap: () => context.go('/kenali'));
-    final m3 = Mission(title: 'Jelajahi Profesi Digital Berprospek Tinggi di Jelajah Profesi', iconAsset: 'assets/images/kamus.png', imageAsset: imgs[2], point: 100, isMandatory: false, description: 'Misi dianjurkan karena Jelajah Profesi di Kamus Karier membantu kamu mengeksplor profesi digital dan prospeknya');
-    final m4 = Mission(title: 'Susun Rencana Karier Awal Agar Langkahmu Lebih Terarah di Rencana Karier', iconAsset: 'assets/images/rencana.png', imageAsset: imgs[0], point: 100, isMandatory: true, description: 'Misi wajib dikerjakan karena fitur Rencana Karier membantu kamu merencanakan progres tiap semester dengan langkah yang jelas');
-    final m5 = Mission(title: 'Catat aktivitas portofolio', iconAsset: 'assets/images/aktivitas.png', imageAsset: imgs[1], point: 100);
-    final m6 = Mission(title: 'Gunakan rekomendasi portofolio', iconAsset: 'assets/images/pengisian.png', imageAsset: imgs[2], point: 100);
-    final m7 = Mission(title: 'Akses modul materi edukasi', iconAsset: 'assets/images/modul.png', imageAsset: imgs[0], point: 100);
-    final m8 = Mission(title: 'Buat CV Profesional', iconAsset: 'assets/images/cv.png', imageAsset: imgs[1], point: 100);
-    final m9 = Mission(title: 'Penuhi kebutuhan seleksi kerja', iconAsset: 'assets/images/kebutuhan.png', imageAsset: imgs[2], point: 100);
+    final m1 = Mission(
+        title: 'Simpan Data Pendidikan Terkini & Terdahulu Dengan Jejak Studi',
+        iconAsset: 'assets/images/pendidikan.png',
+        imageAsset: imgs[0],
+        point: 100,
+        isMandatory: true,
+        description:
+            'Misi wajib karena Jejak Studi menyimpan riwayat pendidikanmu, agar sistem bisa membantu persiapan karier selama kuliah dengan lebih tepat');
+    final m2 = Mission(
+        title:
+            'Menetapkan Tujuan Karier Dengan Tes Profil Karier di Fitur Kenali Diri',
+        iconAsset: 'assets/images/rekomendasi.png',
+        imageAsset: imgs[1],
+        point: 100,
+        isMandatory: true,
+        description:
+            'Misi wajib karena tes profil karier memberi rekomendasi profesi awal agar tujuan karier lebih jelas dan langkah selanjutnya lebih terarah',
+        onTap: () => context.go('/kenali'));
+    final m3 = Mission(
+        title: 'Jelajahi Profesi Digital Berprospek Tinggi di Jelajah Profesi',
+        iconAsset: 'assets/images/kamus.png',
+        imageAsset: imgs[2],
+        point: 100,
+        isMandatory: false,
+        description:
+            'Misi dianjurkan karena Jelajah Profesi di Kamus Karier membantu kamu mengeksplor profesi digital dan prospeknya');
+    final m4 = Mission(
+        title:
+            'Susun Rencana Karier Awal Agar Langkahmu Lebih Terarah di Rencana Karier',
+        iconAsset: 'assets/images/rencana.png',
+        imageAsset: imgs[0],
+        point: 100,
+        isMandatory: true,
+        description:
+            'Misi wajib dikerjakan karena fitur Rencana Karier membantu kamu merencanakan progres tiap semester dengan langkah yang jelas');
+    final m5 = Mission(
+        title: 'Catat aktivitas portofolio',
+        iconAsset: 'assets/images/aktivitas.png',
+        imageAsset: imgs[1],
+        point: 100);
+    final m6 = Mission(
+        title: 'Gunakan rekomendasi portofolio',
+        iconAsset: 'assets/images/pengisian.png',
+        imageAsset: imgs[2],
+        point: 100);
+    final m7 = Mission(
+        title: 'Akses modul materi edukasi',
+        iconAsset: 'assets/images/modul.png',
+        imageAsset: imgs[0],
+        point: 100);
+    final m8 = Mission(
+        title: 'Buat CV Profesional',
+        iconAsset: 'assets/images/cv.png',
+        imageAsset: imgs[1],
+        point: 100);
+    final m9 = Mission(
+        title: 'Penuhi kebutuhan seleksi kerja',
+        iconAsset: 'assets/images/kebutuhan.png',
+        imageAsset: imgs[2],
+        point: 100);
     switch (type) {
-      case PersonaType.pathfinder: return [m1, m2, m3, m4];
-      case PersonaType.builder: return [m1, m2, m3, m4, m5, m6];
-      case PersonaType.achiever: return [m1, m2, m3, m4, m5, m6, m7, m8, m9];
+      case PersonaType.pathfinder:
+        return [m1, m2, m3, m4];
+      case PersonaType.builder:
+        return [m1, m2, m3, m4, m5, m6];
+      case PersonaType.achiever:
+        return [m1, m2, m3, m4, m5, m6, m7, m8, m9];
     }
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final personaState = ref.watch(personaProvider);
     final type = personaState.finalPersona ?? PersonaType.pathfinder;
     final header = switch (type) {
@@ -47,9 +115,21 @@ class PersonaResultPage extends ConsumerWidget {
       PersonaType.builder => 'The Achiever',
       PersonaType.achiever => 'The Achiever',
     };
-    final missions = _missionsFor(type, context);
-    final doneCount = missions.where((m) => m.done).length;
-    final total = missions.length;
+
+    // Timpa status "selesai" tiap misi dengan data asli dari backend
+    // (index sejajar dengan urutan misi statis di server).
+    final doneFlags = personaState.missionsCompleted;
+    final missions = [
+      for (final (i, m) in _missionsFor(type, context).indexed)
+        i < doneFlags.length ? m.copyWith(done: doneFlags[i]) : m,
+    ];
+
+    final total = personaState.totalMissions > 0
+        ? personaState.totalMissions
+        : missions.length;
+    final doneCount = personaState.totalMissions > 0
+        ? personaState.completedMissions
+        : missions.where((m) => m.done).length;
     final progress = total == 0 ? 0.0 : doneCount / total;
 
     return Scaffold(
@@ -61,11 +141,23 @@ class PersonaResultPage extends ConsumerWidget {
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
         elevation: 0,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: IconButton(
+              onPressed: () => context.go('/home?tab=profile'),
+              icon: const Icon(Icons.account_circle, color: Color(0xFF102542)),
+              tooltip: 'Profil',
+            ),
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.only(bottom: 110),
         children: [
-          AspectRatio(aspectRatio: 392 / 200, child: Image.asset(header, fit: BoxFit.cover)),
+          AspectRatio(
+              aspectRatio: 392 / 200,
+              child: Image.asset(header, fit: BoxFit.cover)),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
             child: Column(
@@ -73,11 +165,17 @@ class PersonaResultPage extends ConsumerWidget {
               children: [
                 // --- PROGRESS BOX ---
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
-                    boxShadow: const [BoxShadow(color: Color(0x11000000), blurRadius: 8, offset: Offset(0, 3))],
+                    boxShadow: const [
+                      BoxShadow(
+                          color: Color(0x11000000),
+                          blurRadius: 8,
+                          offset: Offset(0, 3))
+                    ],
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -85,14 +183,26 @@ class PersonaResultPage extends ConsumerWidget {
                       Row(
                         children: [
                           Container(
-                            width: 54, height: 54,
-                            decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFF2E6BFF), width: 2.5)),
+                            width: 54,
+                            height: 54,
+                            decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                    color: const Color(0xFF2E6BFF),
+                                    width: 2.5)),
                             clipBehavior: Clip.antiAlias,
-                            child: Image.asset('assets/images/mission_progress_icon.png', fit: BoxFit.cover,
+                            child: Image.asset(
+                                'assets/images/mission_progress_icon.png',
+                                fit: BoxFit.cover,
                                 errorBuilder: (_, __, ___) => Container(
-                                  decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xFF1A56FF), Color(0xFF38BDF8)])),
-                                  child: const Icon(Icons.person, color: Colors.white),
-                                )),
+                                      decoration: const BoxDecoration(
+                                          gradient: LinearGradient(colors: [
+                                        Color(0xFF1A56FF),
+                                        Color(0xFF38BDF8)
+                                      ])),
+                                      child: const Icon(Icons.person,
+                                          color: Colors.white),
+                                    )),
                           ),
                           const SizedBox(width: 14),
                           Expanded(
@@ -100,36 +210,73 @@ class PersonaResultPage extends ConsumerWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 RichText(
-                                  text: TextSpan(style: _pp(14, FontWeight.w600, const Color(0xFF1F2937)), children: [
-                                    TextSpan(text: '$doneCount', style: _pp(20, FontWeight.w800, const Color(0xFF2E6BFF))),
-                                    const TextSpan(text: ' dari '),
-                                    TextSpan(text: '$total', style: _pp(20, FontWeight.w800, const Color(0xFF1F2937))),
-                                    const TextSpan(text: ' misi wajib Terselesaikan'),
-                                  ]),
+                                  text: TextSpan(
+                                      style: _pp(14, FontWeight.w600,
+                                          const Color(0xFF1F2937)),
+                                      children: [
+                                        TextSpan(
+                                            text: '$doneCount',
+                                            style: _pp(20, FontWeight.w800,
+                                                const Color(0xFF2E6BFF))),
+                                        const TextSpan(text: ' dari '),
+                                        TextSpan(
+                                            text: '$total',
+                                            style: _pp(20, FontWeight.w800,
+                                                const Color(0xFF1F2937))),
+                                        const TextSpan(
+                                            text: ' misi wajib Terselesaikan'),
+                                      ]),
                                 ),
                                 const SizedBox(height: 8),
                                 LayoutBuilder(builder: (ctx, cx) {
                                   final w = cx.maxWidth;
                                   final fw = (w * progress).clamp(0.0, w);
-                                  return Stack(clipBehavior: Clip.none, children: [
-                                    Container(height: 16, decoration: BoxDecoration(color: const Color(0xFFCEF3FB), borderRadius: BorderRadius.circular(20))),
-                                    AnimatedContainer(
-                                      duration: const Duration(milliseconds: 600),
-                                      width: fw, height: 16,
-                                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(20),
-                                          gradient: const LinearGradient(colors: [Color(0xFF1A56FF), Color(0xFF38BDF8)])),
-                                    ),
-                                    if (progress > 0)
-                                      Positioned(
-                                        left: fw - 11, top: -3,
-                                        child: Container(
-                                          width: 22, height: 22,
-                                          decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white,
-                                              border: Border.all(color: const Color(0xFF1A56FF), width: 2.5),
-                                              boxShadow: const [BoxShadow(color: Color(0x33000000), blurRadius: 4)]),
+                                  return Stack(
+                                      clipBehavior: Clip.none,
+                                      children: [
+                                        Container(
+                                            height: 16,
+                                            decoration: BoxDecoration(
+                                                color: const Color(0xFFCEF3FB),
+                                                borderRadius:
+                                                    BorderRadius.circular(20))),
+                                        AnimatedContainer(
+                                          duration:
+                                              const Duration(milliseconds: 600),
+                                          width: fw,
+                                          height: 16,
+                                          decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                              gradient: const LinearGradient(
+                                                  colors: [
+                                                    Color(0xFF1A56FF),
+                                                    Color(0xFF38BDF8)
+                                                  ])),
                                         ),
-                                      ),
-                                  ]);
+                                        if (progress > 0)
+                                          Positioned(
+                                            left: fw - 11,
+                                            top: -3,
+                                            child: Container(
+                                              width: 22,
+                                              height: 22,
+                                              decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  color: Colors.white,
+                                                  border: Border.all(
+                                                      color: const Color(
+                                                          0xFF1A56FF),
+                                                      width: 2.5),
+                                                  boxShadow: const [
+                                                    BoxShadow(
+                                                        color:
+                                                            Color(0x33000000),
+                                                        blurRadius: 4)
+                                                  ]),
+                                            ),
+                                          ),
+                                      ]);
                                 }),
                               ],
                             ),
@@ -138,9 +285,12 @@ class PersonaResultPage extends ConsumerWidget {
                       ),
                       const SizedBox(height: 10),
                       Row(children: [
-                        const Icon(Icons.star, color: Color(0xFFFFC107), size: 16),
+                        const Icon(Icons.star,
+                            color: Color(0xFFFFC107), size: 16),
                         const SizedBox(width: 6),
-                        Text('Persona berikutnya $nextPersona', style: _pp(12, FontWeight.w700, const Color(0xFF374151))),
+                        Text('Persona berikutnya $nextPersona',
+                            style: _pp(
+                                12, FontWeight.w700, const Color(0xFF374151))),
                       ]),
                     ],
                   ),
@@ -159,34 +309,56 @@ class PersonaResultPage extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Tentang Persona', style: _pp(18, FontWeight.w800, const Color(0xFF1F2937))),
+                      Text('Tentang Persona',
+                          style: _pp(
+                              18, FontWeight.w800, const Color(0xFF1F2937))),
                       const SizedBox(height: 8),
                       RichText(
                         textAlign: TextAlign.justify,
-                        text: TextSpan(style: _pp(14, FontWeight.w400, const Color(0xFF4B5563)), children: [
-                          TextSpan(text: switch (type) {
-                            PersonaType.pathfinder => 'Sebagai ',
-                            PersonaType.builder => 'Sebagai ',
-                            PersonaType.achiever => 'Sebagai ',
-                          }),
-                          TextSpan(text: switch (type) {
-                            PersonaType.pathfinder => 'Pathfinder',
-                            PersonaType.builder => 'Builder',
-                            PersonaType.achiever => 'Achiever',
-                          }, style: _pp(14, FontWeight.w800, const Color(0xFF1F2937))),
-                          TextSpan(text: switch (type) {
-                            PersonaType.pathfinder => ', kamu sedang dalam\n',
-                            PersonaType.builder => ', kamu mulai membangun\n',
-                            PersonaType.achiever => ', kamu fokus mempersiapkan\n',
-                          }),
-                          TextSpan(text: switch (type) {
-                            PersonaType.pathfinder => 'proses mencari dan merencanakan karier',
-                            PersonaType.builder => 'fondasi karier dengan memperkuat portofolio',
-                            PersonaType.achiever => 'diri untuk proses seleksi kerja',
-                          }, style: _pp(14, FontWeight.w700, const Color(0xFF1F2937))),
-                          const TextSpan(text: '\n'),
-                          TextSpan(text: 'Lihat Selengkapnya', style: _pp(14, FontWeight.w700, const Color(0xFF2E6BFF))),
-                        ]),
+                        text: TextSpan(
+                            style: _pp(
+                                14, FontWeight.w400, const Color(0xFF4B5563)),
+                            children: [
+                              TextSpan(
+                                  text: switch (type) {
+                                PersonaType.pathfinder => 'Sebagai ',
+                                PersonaType.builder => 'Sebagai ',
+                                PersonaType.achiever => 'Sebagai ',
+                              }),
+                              TextSpan(
+                                  text: switch (type) {
+                                    PersonaType.pathfinder => 'Pathfinder',
+                                    PersonaType.builder => 'Builder',
+                                    PersonaType.achiever => 'Achiever',
+                                  },
+                                  style: _pp(14, FontWeight.w800,
+                                      const Color(0xFF1F2937))),
+                              TextSpan(
+                                  text: switch (type) {
+                                PersonaType.pathfinder =>
+                                  ', kamu sedang dalam\n',
+                                PersonaType.builder =>
+                                  ', kamu mulai membangun\n',
+                                PersonaType.achiever =>
+                                  ', kamu fokus mempersiapkan\n',
+                              }),
+                              TextSpan(
+                                  text: switch (type) {
+                                    PersonaType.pathfinder =>
+                                      'proses mencari dan merencanakan karier',
+                                    PersonaType.builder =>
+                                      'fondasi karier dengan memperkuat portofolio',
+                                    PersonaType.achiever =>
+                                      'diri untuk proses seleksi kerja',
+                                  },
+                                  style: _pp(14, FontWeight.w700,
+                                      const Color(0xFF1F2937))),
+                              const TextSpan(text: '\n'),
+                              TextSpan(
+                                  text: 'Lihat Selengkapnya',
+                                  style: _pp(14, FontWeight.w700,
+                                      const Color(0xFF2E6BFF))),
+                            ]),
                       ),
                     ],
                   ),
@@ -194,11 +366,24 @@ class PersonaResultPage extends ConsumerWidget {
                 const SizedBox(height: 20),
 
                 // --- MISI WAJIB ---
-                Text('Misi Wajib Persona', style: _pp(20, FontWeight.w800, const Color(0xFF1F2937))),
+                Text('Misi Wajib Persona',
+                    style: _pp(20, FontWeight.w800, const Color(0xFF1F2937))),
                 const SizedBox(height: 4),
-                Text('Mulai persiapan karir impian kamu dengan menyelesaikan misi wajib berikut', style: _pp(13, FontWeight.w400, const Color(0xFF4B5563))),
+                Text(
+                    'Mulai persiapan karir impian kamu dengan menyelesaikan misi wajib berikut',
+                    style: _pp(13, FontWeight.w400, const Color(0xFF4B5563))),
                 const SizedBox(height: 14),
                 ...missions.map((m) => _MissionTile(mission: m)),
+                const SizedBox(height: 8),
+                Center(
+                  child: TextButton(
+                    onPressed: () => context.go('/home'),
+                    child: Text(
+                      'Lewati Misi',
+                      style: _pp(14, FontWeight.w700, const Color(0xFF6B7280)),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -208,20 +393,25 @@ class PersonaResultPage extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         color: Colors.white,
         child: SizedBox(
-          width: double.infinity, height: 52,
+          width: double.infinity,
+          height: 52,
           child: DecoratedBox(
             decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [Color(0xFF1A56FF), Color(0xFF38BDF8)]),
+              gradient: const LinearGradient(
+                  colors: [Color(0xFF1A56FF), Color(0xFF38BDF8)]),
               borderRadius: BorderRadius.circular(12),
             ),
             child: ElevatedButton(
               onPressed: () => context.go('/kenali'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent, shadowColor: Colors.transparent,
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
-              child: Text('Lanjutkan', style: _pp(16, FontWeight.w700, Colors.white)),
+              child: Text('Kenali Diri',
+                  style: _pp(16, FontWeight.w700, Colors.white)),
             ),
           ),
         ),
@@ -254,13 +444,18 @@ class _MissionTileState extends State<_MissionTile> {
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFBDD9FF), width: 1),
-        boxShadow: const [BoxShadow(color: Color(0x0F000000), blurRadius: 6, offset: Offset(0, 3))],
+        boxShadow: const [
+          BoxShadow(
+              color: Color(0x0F000000), blurRadius: 6, offset: Offset(0, 3))
+        ],
       ),
       child: Column(
         children: [
           InkWell(
             onTap: () => setState(() => _isExpanded = !_isExpanded),
-            borderRadius: _isExpanded ? const BorderRadius.vertical(top: Radius.circular(16)) : BorderRadius.circular(16),
+            borderRadius: _isExpanded
+                ? const BorderRadius.vertical(top: Radius.circular(16))
+                : BorderRadius.circular(16),
             child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
               child: Row(
@@ -276,25 +471,32 @@ class _MissionTileState extends State<_MissionTile> {
                         Positioned.fill(
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(12),
-                            child: Image.asset(m.imageAsset, fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Container(color: const Color(0xFFE5E7EB))),
+                            child: Image.asset(m.imageAsset,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) =>
+                                    Container(color: const Color(0xFFE5E7EB))),
                           ),
                         ),
                         // Corner Ribbon (Wajib/Dianjurkan) seperti desain
                         Positioned(
-                          top: 0, left: 0,
+                          top: 0,
+                          left: 0,
                           child: ClipRRect(
-                            borderRadius: const BorderRadius.only(topLeft: Radius.circular(12)),
+                            borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(12)),
                             child: CustomPaint(
                               size: const Size(68, 28),
-                              painter: _RibbonPainter(isMandatory: m.isMandatory),
+                              painter:
+                                  _RibbonPainter(isMandatory: m.isMandatory),
                               child: SizedBox(
-                                width: 68, height: 28,
+                                width: 68,
+                                height: 28,
                                 child: Align(
                                   alignment: const Alignment(-0.2, 0.2),
                                   child: Text(
                                     m.isMandatory ? 'Wajib!' : 'Dianjurkan',
-                                    style: _pp(9, FontWeight.w700, Colors.white),
+                                    style:
+                                        _pp(9, FontWeight.w700, Colors.white),
                                   ),
                                 ),
                               ),
@@ -311,17 +513,26 @@ class _MissionTileState extends State<_MissionTile> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(m.title, style: _pp(13, FontWeight.w700, const Color(0xFF1F2937)), maxLines: 3, overflow: TextOverflow.ellipsis),
+                        Text(m.title,
+                            style: _pp(
+                                13, FontWeight.w700, const Color(0xFF1F2937)),
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis),
                         const SizedBox(height: 8),
                         Wrap(
-                          spacing: 6, runSpacing: 6,
+                          spacing: 6,
+                          runSpacing: 6,
                           crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             // Status chip
                             _chip(
                               label: m.done ? 'Selesai' : 'Belum Selesai',
-                              bgColor: m.done ? const Color(0xFFD1FAE5) : const Color(0xFFF3F4F6),
-                              textColor: m.done ? const Color(0xFF059669) : const Color(0xFF9CA3AF),
+                              bgColor: m.done
+                                  ? const Color(0xFFD1FAE5)
+                                  : const Color(0xFFF3F4F6),
+                              textColor: m.done
+                                  ? const Color(0xFF059669)
+                                  : const Color(0xFF9CA3AF),
                             ),
                             // Akses chip
                             if (!m.done)
@@ -332,19 +543,29 @@ class _MissionTileState extends State<_MissionTile> {
                               ),
                             // Koin chip
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 5),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFFEF3C7),
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: const Color(0xFFFCD34D)),
+                                border:
+                                    Border.all(color: const Color(0xFFFCD34D)),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Image.asset('assets/images/rextra_koin.png', width: 16, height: 16, fit: BoxFit.contain,
-                                      errorBuilder: (_, __, ___) => const Icon(Icons.monetization_on, size: 14, color: Color(0xFFD97706))),
+                                  Image.asset('assets/images/rextra_koin.png',
+                                      width: 16,
+                                      height: 16,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (_, __, ___) => const Icon(
+                                          Icons.monetization_on,
+                                          size: 14,
+                                          color: Color(0xFFD97706))),
                                   const SizedBox(width: 4),
-                                  Text('+ ${m.point}', style: _pp(12, FontWeight.w800, const Color(0xFFD97706))),
+                                  Text('+ ${m.point}',
+                                      style: _pp(12, FontWeight.w800,
+                                          const Color(0xFFD97706))),
                                 ],
                               ),
                             ),
@@ -355,7 +576,12 @@ class _MissionTileState extends State<_MissionTile> {
                   ),
 
                   // Chevron
-                  Icon(_isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, color: const Color(0xFF9CA3AF), size: 22),
+                  Icon(
+                      _isExpanded
+                          ? Icons.keyboard_arrow_up
+                          : Icons.keyboard_arrow_down,
+                      color: const Color(0xFF9CA3AF),
+                      size: 22),
                 ],
               ),
             ),
@@ -371,25 +597,32 @@ class _MissionTileState extends State<_MissionTile> {
                   const Divider(height: 1, color: Color(0xFFE5E7EB)),
                   const SizedBox(height: 12),
                   Text(
-                    m.description.isEmpty ? 'Misi ini akan membantu kamu mencapai tujuan karier.' : m.description,
+                    m.description.isEmpty
+                        ? 'Misi ini akan membantu kamu mencapai tujuan karier.'
+                        : m.description,
                     style: _pp(13, FontWeight.w400, const Color(0xFF4B5563)),
                   ),
                   const SizedBox(height: 14),
                   SizedBox(
-                    width: double.infinity, height: 44,
+                    width: double.infinity,
+                    height: 44,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(colors: [Color(0xFF1A56FF), Color(0xFF38BDF8)]),
+                        gradient: const LinearGradient(
+                            colors: [Color(0xFF1A56FF), Color(0xFF38BDF8)]),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: ElevatedButton(
                         onPressed: m.onTap ?? () {},
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent, shadowColor: Colors.transparent,
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
                         ),
-                        child: Text('Kerjakan Misi', style: _pp(14, FontWeight.w700, Colors.white)),
+                        child: Text('Kerjakan Misi',
+                            style: _pp(14, FontWeight.w700, Colors.white)),
                       ),
                     ),
                   ),
@@ -401,10 +634,14 @@ class _MissionTileState extends State<_MissionTile> {
     );
   }
 
-  Widget _chip({required String label, required Color bgColor, required Color textColor}) {
+  Widget _chip(
+      {required String label,
+      required Color bgColor,
+      required Color textColor}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-      decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(
+          color: bgColor, borderRadius: BorderRadius.circular(20)),
       child: Text(label, style: _pp(11, FontWeight.w700, textColor)),
     );
   }

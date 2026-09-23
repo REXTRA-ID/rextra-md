@@ -64,7 +64,8 @@ class _RegisterPageState extends State<RegisterPage> {
 
     if (!agree) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Kamu harus menyetujui syarat & ketentuan')),
+        const SnackBar(
+            content: Text('Kamu harus menyetujui syarat & ketentuan')),
       );
       return;
     }
@@ -201,7 +202,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 textInputAction: TextInputAction.next,
                 decoration: _inputDecoration('Masukkan nama lengkap anda'),
                 validator: (v) =>
-                (v == null || v.trim().isEmpty) ? 'Nama wajib diisi' : null,
+                    (v == null || v.trim().isEmpty) ? 'Nama wajib diisi' : null,
               ),
               const SizedBox(height: 18),
 
@@ -240,7 +241,9 @@ class _RegisterPageState extends State<RegisterPage> {
                       showPass ? Icons.visibility_off : Icons.visibility,
                       color: const Color(0xFF111827),
                     ),
-                    onPressed: loading ? null : () => setState(() => showPass = !showPass),
+                    onPressed: loading
+                        ? null
+                        : () => setState(() => showPass = !showPass),
                   ),
                 ),
                 validator: _passwordValidator,
@@ -252,6 +255,8 @@ class _RegisterPageState extends State<RegisterPage> {
                 controller: confirmC,
                 enabled: !loading,
                 obscureText: !showConfirm,
+                textInputAction: TextInputAction.done,
+                onFieldSubmitted: (_) => loading ? null : _submit(),
                 decoration: _inputDecoration(
                   'Masukkan ulang kata sandi anda',
                   suffixIcon: IconButton(
@@ -259,10 +264,13 @@ class _RegisterPageState extends State<RegisterPage> {
                       showConfirm ? Icons.visibility_off : Icons.visibility,
                       color: const Color(0xFF111827),
                     ),
-                    onPressed: loading ? null : () => setState(() => showConfirm = !showConfirm),
+                    onPressed: loading
+                        ? null
+                        : () => setState(() => showConfirm = !showConfirm),
                   ),
                 ),
-                validator: (v) => (v ?? '') != passC.text ? 'Konfirmasi tidak sama' : null,
+                validator: (v) =>
+                    (v ?? '') != passC.text ? 'Konfirmasi tidak sama' : null,
               ),
               const SizedBox(height: 18),
 
@@ -273,8 +281,11 @@ class _RegisterPageState extends State<RegisterPage> {
                     padding: const EdgeInsets.only(top: 2),
                     child: Checkbox(
                       value: agree,
-                      onChanged: loading ? null : (v) => setState(() => agree = v ?? false),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                      onChanged: loading
+                          ? null
+                          : (v) => setState(() => agree = v ?? false),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6)),
                       activeColor: primaryBlue,
                     ),
                   ),
@@ -295,9 +306,10 @@ class _RegisterPageState extends State<RegisterPage> {
                               color: primaryBlue,
                               fontWeight: FontWeight.w800,
                             ),
-                            recognizer: TapGestureRecognizer()..onTap = () {
-                              // TODO: buka halaman T&C
-                            },
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                // TODO: buka halaman T&C
+                              },
                           ),
                           const TextSpan(text: ' yang berlaku'),
                         ],
@@ -315,22 +327,27 @@ class _RegisterPageState extends State<RegisterPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryBlue,
                     disabledBackgroundColor: primaryBlue.withOpacity(0.6),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
                     elevation: 0,
                   ),
                   child: loading
                       ? const SizedBox(
-                    height: 22,
-                    width: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
+                          height: 22,
+                          width: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
                       : const Text(
-                    'Daftar Akun',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white),
-                  ),
+                          'Daftar Akun',
+                          style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white),
+                        ),
                 ),
               ),
 
@@ -339,7 +356,8 @@ class _RegisterPageState extends State<RegisterPage> {
               // Divider "Atau masuk dengan"
               Row(
                 children: const [
-                  Expanded(child: Divider(color: Color(0xFFD7DDE5), thickness: 1)),
+                  Expanded(
+                      child: Divider(color: Color(0xFFD7DDE5), thickness: 1)),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 12),
                     child: Text(
@@ -350,7 +368,8 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
                   ),
-                  Expanded(child: Divider(color: Color(0xFFD7DDE5), thickness: 1)),
+                  Expanded(
+                      child: Divider(color: Color(0xFFD7DDE5), thickness: 1)),
                 ],
               ),
               const SizedBox(height: 14),
@@ -359,15 +378,17 @@ class _RegisterPageState extends State<RegisterPage> {
               SizedBox(
                 height: 56,
                 child: OutlinedButton.icon(
-                  onPressed: loading ? null : () {
-                    // TODO: implement Google Sign-In
-                  },
+                  onPressed: loading
+                      ? null
+                      : () {
+                          // TODO: implement Google Sign-In
+                        },
                   style: OutlinedButton.styleFrom(
                     backgroundColor: const Color(0xFFDCE8FF),
                     side: BorderSide.none,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
                   ),
-
                   label: const Text(
                     'Google',
                     style: TextStyle(
@@ -393,8 +414,10 @@ class _RegisterPageState extends State<RegisterPage> {
                     children: [
                       TextSpan(
                         text: 'Masuk',
-                        style: const TextStyle(color: primaryBlue, fontWeight: FontWeight.w900),
-                        recognizer: TapGestureRecognizer()..onTap = () => context.push('/login'),
+                        style: const TextStyle(
+                            color: primaryBlue, fontWeight: FontWeight.w900),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () => context.push('/login'),
                       ),
                     ],
                   ),

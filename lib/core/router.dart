@@ -150,7 +150,12 @@ final router = GoRouter(
     ),
 
     // --- Placeholder Home (sementara)
-    GoRoute(path: '/home', builder: (_, __) => const HomePage()),
+    GoRoute(
+      path: '/home',
+      builder: (_, s) => HomePage(
+        initialTab: s.uri.queryParameters['tab'] == 'profile' ? 4 : 0,
+      ),
+    ),
 
     // --- Kenali Diri
     GoRoute(path: '/kenali', builder: (_, __) => const KenaliDiriInfoPage()),

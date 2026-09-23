@@ -1,17 +1,19 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../auth/data/auth_service.dart';
 import '../../../core/utils/nav_utils.dart';
+import '../../persona/presentation/providers/persona_provider.dart';
 
-class LoginPage extends StatefulWidget {
+class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  ConsumerState<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends ConsumerState<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final emailC = TextEditingController();
   final passC = TextEditingController();
@@ -28,6 +30,16 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+  /// Setelah login berhasil: kalau user sudah pernah menyelesaikan asesmen
+  /// persona sebelumnya, langsung ke halaman misi (tanpa mengulang asesmen).
+  /// Kalau belum, mulai alur asesmen dari awal.
+  Future<void> _goAfterLogin() async {
+    final existing =
+        await ref.read(personaProvider.notifier).fetchExistingPersona();
+    if (!mounted) return;
+    context.go(existing != null ? '/persona/result' : '/persona/welcome');
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -40,7 +52,7 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (!mounted) return;
-      context.go('/persona/welcome');
+      await _goAfterLogin();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Gagal masuk: $e')),
@@ -67,7 +79,6 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-
       appBar: AppBar(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
@@ -82,7 +93,6 @@ class _LoginPageState extends State<LoginPage> {
           height: 26,
         ),
       ),
-
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -115,7 +125,7 @@ class _LoginPageState extends State<LoginPage> {
 
               const Text(
                 'Hi Sobat Rexi, Senang bertemu lagi!\n'
-                    'Yuk, jelajahi REXTRA dengan masuk ke akunmu!',
+                'Yuk, jelajahi REXTRA dengan masuk ke akunmu!',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,
@@ -138,8 +148,9 @@ class _LoginPageState extends State<LoginPage> {
               TextFormField(
                 controller: emailC,
                 keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
                 validator: (v) =>
-                (v == null || v.isEmpty) ? 'Email wajib diisi' : null,
+                    (v == null || v.isEmpty) ? 'Email wajib diisi' : null,
                 decoration: _inputDecoration('Masukkan alamat email anda'),
               ),
 
@@ -158,18 +169,17 @@ class _LoginPageState extends State<LoginPage> {
               TextFormField(
                 controller: passC,
                 obscureText: !showPass,
+                textInputAction: TextInputAction.done,
+                onFieldSubmitted: (_) => loading ? null : _submit(),
                 validator: (v) =>
-                (v == null || v.isEmpty) ? 'Kata sandi wajib diisi' : null,
-                decoration: _inputDecoration('Masukkan kata sandi anda')
-                    .copyWith(
+                    (v == null || v.isEmpty) ? 'Kata sandi wajib diisi' : null,
+                decoration:
+                    _inputDecoration('Masukkan kata sandi anda').copyWith(
                   suffixIcon: IconButton(
                     icon: Icon(
-                      showPass
-                          ? Icons.visibility_off
-                          : Icons.visibility,
+                      showPass ? Icons.visibility_off : Icons.visibility,
                     ),
-                    onPressed: () =>
-                        setState(() => showPass = !showPass),
+                    onPressed: () => setState(() => showPass = !showPass),
                   ),
                 ),
               ),
@@ -214,15 +224,15 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   child: loading
                       ? const CircularProgressIndicator(
-                    color: Colors.white,
-                  )
+                          color: Colors.white,
+                        )
                       : const Text(
-                    'Masuk',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                          'Masuk',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                 ),
               ),
 
@@ -251,7 +261,7 @@ class _LoginPageState extends State<LoginPage> {
                     try {
                       await _auth.loginWithGoogle();
                       if (!mounted) return;
-                      context.go('/persona/welcome');
+                      await _goAfterLogin();
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('Login Google gagal: $e')),
@@ -294,8 +304,7 @@ class _LoginPageState extends State<LoginPage> {
                           decoration: TextDecoration.underline,
                         ),
                         recognizer: TapGestureRecognizer()
-                          ..onTap =
-                              () => context.push('/register'),
+                          ..onTap = () => context.push('/register'),
                       ),
                     ],
                   ),

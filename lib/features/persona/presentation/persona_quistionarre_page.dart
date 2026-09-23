@@ -12,16 +12,18 @@ class PersonaQuestionnairePage extends ConsumerStatefulWidget {
   const PersonaQuestionnairePage({super.key});
 
   @override
-  ConsumerState<PersonaQuestionnairePage> createState() => _PersonaQuestionnairePageState();
+  ConsumerState<PersonaQuestionnairePage> createState() =>
+      _PersonaQuestionnairePageState();
 }
 
-class _PersonaQuestionnairePageState extends ConsumerState<PersonaQuestionnairePage> {
+class _PersonaQuestionnairePageState
+    extends ConsumerState<PersonaQuestionnairePage> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
   bool _ansQ1 = true;
-  bool _ansQ2 = true;
-  bool _ansQ3 = true;
+  // 'iya' | 'sedang' | 'tidak'
+  String _ansQ2 = 'iya';
 
   @override
   void dispose() {
@@ -41,30 +43,20 @@ class _PersonaQuestionnairePageState extends ConsumerState<PersonaQuestionnaireP
     final notifier = ref.read(personaProvider.notifier);
 
     if (_currentPage == 0) {
-      // IF Q1 == "Ya" -> Pathfinder
-      if (_ansQ1 == true) {
+      // IF Q1 == "Tidak" -> Pathfinder
+      if (_ansQ1 == false) {
         await notifier.saveEarlyDecision(PersonaType.pathfinder);
         if (mounted) context.push('/persona/reveal');
         return;
       }
-      // ELSE -> Lanjut Q2
-      notifier.setTujuan(false);
-      _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
-    }
-    else if (_currentPage == 1) {
-      // IF Q2 == "Ya" -> Builder
-      if (_ansQ2 == true) {
-        await notifier.saveEarlyDecision(PersonaType.builder);
-        if (mounted) context.push('/persona/reveal');
-        return;
-      }
-      // ELSE -> Lanjut Q3
-      notifier.setPorto(false);
-      _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
-    }
-    else if (_currentPage == 2) {
-      // IF Q3 == "Ya" -> Achiever, ELSE -> Builder
-      final type = _ansQ3 ? PersonaType.achiever : PersonaType.builder;
+      // ELSE (Q1 == "Iya") -> Lanjut Q2
+      notifier.setTujuan(true);
+      _pageController.nextPage(
+          duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+    } else if (_currentPage == 1) {
+      // Q1 == "Iya" sudah pasti di sini.
+      // IF Q2 == "Iya" -> Achiever, ELSE (Sedang/Tidak) -> Builder
+      final type = _ansQ2 == 'iya' ? PersonaType.achiever : PersonaType.builder;
       await notifier.saveEarlyDecision(type);
       if (mounted) context.push('/persona/reveal');
     }
@@ -127,21 +119,17 @@ class _PersonaQuestionnairePageState extends ConsumerState<PersonaQuestionnaireP
                   optNo: 'Tidak, Saya belum punya',
                   onChanged: (val) => setState(() => _ansQ1 = val),
                 ),
-                _buildQuestionPage(
+                _buildQuestionPage3(
                   title: 'Portofolio Karier',
-                  questionText: 'Lantas, apakah kamu sedang membangun portofolio profesional?',
+                  questionText:
+                      'Lantas, apakah kamu sedang membangun portofolio profesional?',
                   selectedAns: _ansQ2,
-                  optYes: 'Iya, saya sudah punya',
-                  optNo: 'Tidak, Saya belum punya',
+                  options: const [
+                    ('iya', 'Iya, saya sudah punya'),
+                    ('sedang', 'Sedang saya bangun'),
+                    ('tidak', 'Tidak, saya belum punya'),
+                  ],
                   onChanged: (val) => setState(() => _ansQ2 = val),
-                ),
-                _buildQuestionPage(
-                  title: 'Rekrutmen Kerja',
-                  questionText: 'Apakah kamu sedang ikut seleksi kerja? seperti magang dan lainnya',
-                  selectedAns: _ansQ3,
-                  optYes: 'Iya, saya sedang ikut',
-                  optNo: 'Tidak, saya belum ikut',
-                  onChanged: (val) => setState(() => _ansQ3 = val),
                 ),
               ],
             ),
@@ -150,7 +138,13 @@ class _PersonaQuestionnairePageState extends ConsumerState<PersonaQuestionnaireP
           // BAGIAN BAWAH: Sticky Bottom Bar bergaya BottomSheet
           Container(
             width: double.infinity,
-            padding: EdgeInsets.fromLTRB(24.w, 16.h, 24.w, MediaQuery.of(context).padding.bottom > 0 ? MediaQuery.of(context).padding.bottom + 8.h : 24.h),
+            padding: EdgeInsets.fromLTRB(
+                24.w,
+                16.h,
+                24.w,
+                MediaQuery.of(context).padding.bottom > 0
+                    ? MediaQuery.of(context).padding.bottom + 8.h
+                    : 24.h),
             decoration: BoxDecoration(
               color: Colors.white, // Background bar putih
               border: const Border(
@@ -193,7 +187,8 @@ class _PersonaQuestionnairePageState extends ConsumerState<PersonaQuestionnaireP
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(height: 18.h),
-            Text(title, style: AppTypography.h5.copyWith(color: AppColors.primary600)),
+            Text(title,
+                style: AppTypography.h5.copyWith(color: AppColors.primary600)),
             SizedBox(height: 12.h),
             Container(
               width: 352.w,
@@ -214,7 +209,8 @@ class _PersonaQuestionnairePageState extends ConsumerState<PersonaQuestionnaireP
                   end: Alignment.bottomCenter,
                 ),
                 image: const DecorationImage(
-                  image: AssetImage('assets/images/persona-quistionnare-bg.png'),
+                  image:
+                      AssetImage('assets/images/persona-quistionnare-bg.png'),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -248,7 +244,79 @@ class _PersonaQuestionnairePageState extends ConsumerState<PersonaQuestionnaireP
     );
   }
 
-  Widget _buildOptionTile({required String text, required bool isSelected, required VoidCallback onTap}) {
+  Widget _buildQuestionPage3({
+    required String title,
+    required String questionText,
+    required String selectedAns,
+    required List<(String value, String label)> options,
+    required Function(String) onChanged,
+  }) {
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 24.w),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 18.h),
+            Text(title,
+                style: AppTypography.h5.copyWith(color: AppColors.primary600)),
+            SizedBox(height: 12.h),
+            Container(
+              width: 352.w,
+              height: 120.h,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16.06.r),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.3),
+                  width: 1,
+                ),
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0xFF090B72),
+                    Color(0xFF064ADF),
+                    Color(0xFF23DCE1),
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+                image: const DecorationImage(
+                  image:
+                      AssetImage('assets/images/persona-quistionnare-bg.png'),
+                  fit: BoxFit.cover,
+                ),
+              ),
+              child: Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  child: Text(
+                    questionText,
+                    style: AppTypography.h5.copyWith(color: Colors.white),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 32.h),
+            for (final (i, option) in options.indexed) ...[
+              if (i > 0) SizedBox(height: 20.h),
+              _buildOptionTile(
+                text: option.$2,
+                isSelected: selectedAns == option.$1,
+                onTap: () => onChanged(option.$1),
+              ),
+            ],
+            SizedBox(height: 24.h),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOptionTile(
+      {required String text,
+      required bool isSelected,
+      required VoidCallback onTap}) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(10.r),
@@ -256,7 +324,7 @@ class _PersonaQuestionnairePageState extends ConsumerState<PersonaQuestionnaireP
         width: double.infinity,
         padding: EdgeInsets.symmetric(vertical: 12.h),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFE3ECFF) :  const Color(0xFFF3F3F3),
+          color: isSelected ? const Color(0xFFE3ECFF) : const Color(0xFFF3F3F3),
           borderRadius: BorderRadius.circular(10.r),
           border: Border.all(
             color: isSelected ? AppColors.primary600 : Colors.transparent,

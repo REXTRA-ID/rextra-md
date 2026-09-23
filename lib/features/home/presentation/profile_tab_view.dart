@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../auth/data/auth_service.dart';
+import '../../persona/data/persona_repository.dart';
+import '../../persona/domain/persona_models.dart';
 
 /// Konten tab "Profil" di halaman Home — menampilkan info akun
 /// dan satu-satunya jalan resmi untuk keluar dari sesi login.
@@ -13,7 +15,9 @@ class ProfileTabView extends StatefulWidget {
 
 class _ProfileTabViewState extends State<ProfileTabView> {
   final _auth = AuthService();
+  final _personaRepo = PersonaRepository();
   Map<String, dynamic>? _personalInfo;
+  PersonaStatus? _personaStatus;
   bool _loading = true;
   bool _loggingOut = false;
 
@@ -21,6 +25,7 @@ class _ProfileTabViewState extends State<ProfileTabView> {
   void initState() {
     super.initState();
     _loadMe();
+    _loadPersona();
   }
 
   Future<void> _loadMe() async {
@@ -34,6 +39,15 @@ class _ProfileTabViewState extends State<ProfileTabView> {
       // biarkan null, tampilkan seadanya
     } finally {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _loadPersona() async {
+    try {
+      final status = await _personaRepo.getPersona();
+      if (mounted) setState(() => _personaStatus = status);
+    } catch (_) {
+      // biarkan null, kartu pengingat misi cukup disembunyikan
     }
   }
 
@@ -83,6 +97,10 @@ class _ProfileTabViewState extends State<ProfileTabView> {
         const SizedBox(height: 24),
         _InfoTile(label: 'Nomor HP', value: phone),
         _InfoTile(label: 'Peran', value: role),
+        if (_personaStatus != null && !_personaStatus!.isComplete) ...[
+          const SizedBox(height: 24),
+          _MissionReminderCard(status: _personaStatus!),
+        ],
         const SizedBox(height: 32),
         SizedBox(
           width: double.infinity,
@@ -110,6 +128,90 @@ class _ProfileTabViewState extends State<ProfileTabView> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Kartu pengingat misi wajib persona yang belum diselesaikan, ditampilkan
+/// di halaman Profil selama masih ada misi yang tersisa.
+class _MissionReminderCard extends StatelessWidget {
+  final PersonaStatus status;
+  const _MissionReminderCard({required this.status});
+
+  String get _personaLabel {
+    switch (status.type) {
+      case PersonaType.pathfinder:
+        return 'Pathfinder';
+      case PersonaType.builder:
+        return 'Builder';
+      case PersonaType.achiever:
+        return 'Achiever';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = status.totalMissions == 0
+        ? 0.0
+        : status.completedMissions / status.totalMissions;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF1FF),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFBDD9FF)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.flag_rounded, color: Color(0xFF1E4ED8)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Misi Wajib Persona $_personaLabel',
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${status.completedMissions} dari ${status.totalMissions} misi wajib terselesaikan',
+            style: const TextStyle(color: Color(0xFF4B5563), fontSize: 13),
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 8,
+              backgroundColor: const Color(0xFFCEF3FB),
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(Color(0xFF1E4ED8)),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => context.go('/persona/result'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1E4ED8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                'Lanjutkan Misi',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

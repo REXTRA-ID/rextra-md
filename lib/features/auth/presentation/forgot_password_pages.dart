@@ -108,26 +108,27 @@ class _AuthUi {
         style: ElevatedButton.styleFrom(
           backgroundColor: primaryBlue,
           disabledBackgroundColor: primaryBlue.withOpacity(0.6),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
           elevation: 0,
         ),
         child: loading
             ? const SizedBox(
-          width: 22,
-          height: 22,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-          ),
-        )
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
             : Text(
-          text,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: Colors.white,
-          ),
-        ),
+                text,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
       ),
     );
   }
@@ -144,7 +145,8 @@ class _AuthUi {
         style: FilledButton.styleFrom(
           backgroundColor: softBlue,
           foregroundColor: primaryBlue,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         ),
         child: Text(
           text,
@@ -221,8 +223,7 @@ class _ForgotPasswordRequestPageState extends State<ForgotPasswordRequestPage> {
               _AuthUi.hero(
                 asset: 'assets/images/ForgotPasswordd.png',
                 title: 'Lupa Kata Sandi',
-                subtitle:
-                'Hi Sobat REXTRA! Masukkan email kamu, dan\n'
+                subtitle: 'Hi Sobat REXTRA! Masukkan email kamu, dan\n'
                     'kami akan kirim tautan untuk atur ulang kata sandi.',
               ),
               const SizedBox(height: 26),
@@ -230,9 +231,11 @@ class _ForgotPasswordRequestPageState extends State<ForgotPasswordRequestPage> {
               TextFormField(
                 controller: emailC,
                 keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.done,
+                onFieldSubmitted: (_) => loading ? null : _submit(),
                 validator: _emailValidator,
                 decoration:
-                _AuthUi.inputDecoration('Masukkan alamat email kamu'),
+                    _AuthUi.inputDecoration('Masukkan alamat email kamu'),
                 enabled: !loading,
               ),
               const SizedBox(height: 26),
@@ -293,8 +296,7 @@ class _ForgotPasswordSentPageState extends State<ForgotPasswordSentPage> {
             _AuthUi.hero(
               asset: 'assets/images/ResetPasswordDikirim.png',
               title: 'Reset Password Terkirim',
-              subtitle:
-              'Kami telah mengirim tautan reset sandi ke\n'
+              subtitle: 'Kami telah mengirim tautan reset sandi ke\n'
                   '${widget.email}. Periksa kotak masuk/spam\n'
                   'dan klik dalam 24 jam sebelum kadaluarsa',
             ),
@@ -364,8 +366,7 @@ class _ForgotPasswordExpiredPageState extends State<ForgotPasswordExpiredPage> {
             _AuthUi.hero(
               asset: 'assets/images/ResetKataSandiGagal.png',
               title: 'Reset Kata Sandi Gagal',
-              subtitle:
-              'Maaf, tautan telah kadaluarsa. Kamu masih\n'
+              subtitle: 'Maaf, tautan telah kadaluarsa. Kamu masih\n'
                   'dapat memperoleh tautan baru dengan\n'
                   'mengklik tombol di bawah ini.',
             ),
@@ -463,18 +464,17 @@ class _NewPasswordPageState extends State<NewPasswordPage> {
               _AuthUi.hero(
                 asset: 'assets/images/PasswordBaru.png',
                 title: 'Buat Password Baru',
-                subtitle:
-                'Hi Sobat REXTRA! Masukkan email kamu, dan\n'
+                subtitle: 'Hi Sobat REXTRA! Masukkan email kamu, dan\n'
                     'akan kirim tautan untuk atur ulang kata sandi.',
               ),
               const SizedBox(height: 26),
-
               _AuthUi.label('Kata Sandi Baru'),
               TextFormField(
                 controller: passC,
                 validator: _passwordValidator,
                 obscureText: !show1,
                 enabled: !loading,
+                textInputAction: TextInputAction.next,
                 decoration: _AuthUi.inputDecoration(
                   'Masukkan kata sandi baru',
                   suffixIcon: IconButton(
@@ -483,9 +483,7 @@ class _NewPasswordPageState extends State<NewPasswordPage> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 20),
-
               _AuthUi.label('Konfirmasi Kata Sandi Baru'),
               TextFormField(
                 controller: confirmC,
@@ -496,6 +494,8 @@ class _NewPasswordPageState extends State<NewPasswordPage> {
                 },
                 obscureText: !show2,
                 enabled: !loading,
+                textInputAction: TextInputAction.done,
+                onFieldSubmitted: (_) => loading ? null : _submit(),
                 decoration: _AuthUi.inputDecoration(
                   'Masukkan ulang kata sandi',
                   suffixIcon: IconButton(
@@ -504,9 +504,7 @@ class _NewPasswordPageState extends State<NewPasswordPage> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 28),
-
               _AuthUi.primaryButton(
                 loading: loading,
                 text: 'Ganti Password',
@@ -536,8 +534,7 @@ class PasswordResetSuccessPage extends StatelessWidget {
             _AuthUi.hero(
               asset: 'assets/images/Group.png',
               title: 'Kata Sandi Berhasil Diubah',
-              subtitle:
-              'Selamat! Kata sandi kamu berhasil\n'
+              subtitle: 'Selamat! Kata sandi kamu berhasil\n'
                   'diperbarui. Sekarang, kamu bisa masuk\n'
                   'kembali ke akun REXTRA kamu dengan\n'
                   'kata sandi yang baru.',

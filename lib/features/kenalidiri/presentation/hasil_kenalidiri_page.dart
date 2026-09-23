@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/kenalidiri_repository.dart';
 import '../data/models/ikigai_models.dart';
 import '../../../core/utils/nav_utils.dart';
+import '../../persona/data/persona_repository.dart';
 
 const _assetBgHasil = 'assets/images/bg_hasil.png';
 
@@ -15,6 +16,7 @@ class HasilKenaliDiriPage extends StatefulWidget {
 
 class _HasilKenaliDiriPageState extends State<HasilKenaliDiriPage> {
   final _repo = KenaliDiriRepository();
+  final _personaRepo = PersonaRepository();
 
   bool _loading = true;
   String? _error;
@@ -51,6 +53,15 @@ class _HasilKenaliDiriPageState extends State<HasilKenaliDiriPage> {
       );
       if (!mounted) return;
       setState(() => _result = data);
+
+      // Tandai misi "Kenali Diri" selesai di backend, karena hasil
+      // (RIASEC + Ikigai) sudah berhasil didapat.
+      try {
+        await _personaRepo.completeMission('career_recommendation_tried');
+      } catch (_) {
+        // Gagal update misi (mis. offline / belum punya persona) ->
+        // tidak menghentikan tampilan hasil, cukup diabaikan.
+      }
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _error = e.message);
@@ -77,7 +88,9 @@ class _HasilKenaliDiriPageState extends State<HasilKenaliDiriPage> {
     );
 
     if (_loading) {
-      return Scaffold(appBar: appBar, body: const Center(child: CircularProgressIndicator()));
+      return Scaffold(
+          appBar: appBar,
+          body: const Center(child: CircularProgressIndicator()));
     }
     if (_error != null) {
       return Scaffold(
@@ -88,7 +101,8 @@ class _HasilKenaliDiriPageState extends State<HasilKenaliDiriPage> {
             children: [
               Text(_error!),
               const SizedBox(height: 8),
-              ElevatedButton(onPressed: _loadResult, child: const Text('Coba Lagi')),
+              ElevatedButton(
+                  onPressed: _loadResult, child: const Text('Coba Lagi')),
             ],
           ),
         ),
@@ -96,9 +110,9 @@ class _HasilKenaliDiriPageState extends State<HasilKenaliDiriPage> {
     }
     final res = _result!;
     final recs = res.recommendations; // List<IkigaiRecommendation>
-    final code = res.riasecCode;      // misal "RIA"
+    final code = res.riasecCode; // misal "RIA"
     final summary = res.riasecSummary;
-    final letters = res.letters;      // Map<String, String>
+    final letters = res.letters; // Map<String, String>
 
     // urutkan penjelasan tiap huruf: dahulukan huruf di kode RIASEC, lalu sisa
     final orderedLetters = <String>[];
@@ -148,9 +162,13 @@ class _HasilKenaliDiriPageState extends State<HasilKenaliDiriPage> {
                       const SizedBox(height: 12),
 
                       if (recs.isEmpty)
-                        const Text('Belum ada rekomendasi', textAlign: TextAlign.center)
+                        const Text('Belum ada rekomendasi',
+                            textAlign: TextAlign.center)
                       else
-                        ...recs.take(2).map((e) => _RecommendationTile(data: e)).toList(),
+                        ...recs
+                            .take(2)
+                            .map((e) => _RecommendationTile(data: e))
+                            .toList(),
 
                       const SizedBox(height: 18),
 
@@ -167,7 +185,7 @@ class _HasilKenaliDiriPageState extends State<HasilKenaliDiriPage> {
                       const SizedBox(height: 10),
                       const Text(
                         'Rekomendasi profesi digital di atas dibuat berdasarkan kode RIASEC dari hasil tes sebelumnya. '
-                            'Kamu memperoleh kode:',
+                        'Kamu memperoleh kode:',
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 8),
@@ -193,15 +211,20 @@ class _HasilKenaliDiriPageState extends State<HasilKenaliDiriPage> {
                               summary.isEmpty ? '-' : summary,
                               textAlign: TextAlign.center,
                               maxLines: _expandSummary ? null : 3,
-                              overflow:
-                              _expandSummary ? TextOverflow.visible : TextOverflow.ellipsis,
-                              style: const TextStyle(fontWeight: FontWeight.w600),
+                              overflow: _expandSummary
+                                  ? TextOverflow.visible
+                                  : TextOverflow.ellipsis,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w600),
                             ),
                             const SizedBox(height: 8),
                             GestureDetector(
-                              onTap: () => setState(() => _expandSummary = !_expandSummary),
+                              onTap: () => setState(
+                                  () => _expandSummary = !_expandSummary),
                               child: Text(
-                                _expandSummary ? 'Sembunyikan' : 'Lihat Selengkapnya',
+                                _expandSummary
+                                    ? 'Sembunyikan'
+                                    : 'Lihat Selengkapnya',
                                 style: const TextStyle(
                                   color: Color(0xFF2E6BFF),
                                   fontWeight: FontWeight.w900,
@@ -226,15 +249,18 @@ class _HasilKenaliDiriPageState extends State<HasilKenaliDiriPage> {
                       const SizedBox(height: 12),
 
                       if (orderedLetters.isEmpty)
-                        const Text('Tidak ada penjelasan huruf', textAlign: TextAlign.center)
+                        const Text('Tidak ada penjelasan huruf',
+                            textAlign: TextAlign.center)
                       else
                         ...orderedLetters.map((letter) {
-                          final title = '${_riasecNames[letter] ?? 'Unknown'} ($letter)';
+                          final title =
+                              '${_riasecNames[letter] ?? 'Unknown'} ($letter)';
                           final desc = letters[letter] ?? '-';
                           return _LetterInfoCard(
                             titleCenter: title,
                             description: desc,
-                            onTapMore: () => _showLetterDetail(letter, title, desc),
+                            onTapMore: () =>
+                                _showLetterDetail(letter, title, desc),
                           );
                         }),
                     ],
@@ -251,9 +277,13 @@ class _HasilKenaliDiriPageState extends State<HasilKenaliDiriPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ElevatedButton(onPressed: () {/* TODO: navigasi rencana karier */}, child: const Text('Buat Rencana Karier')),
+              ElevatedButton(
+                  onPressed: () {/* TODO: navigasi rencana karier */},
+                  child: const Text('Buat Rencana Karier')),
               const SizedBox(height: 10),
-              FilledButton(onPressed: () {/* TODO: ulangi tes */}, child: const Text('Ulangi Tes')),
+              FilledButton(
+                  onPressed: () {/* TODO: ulangi tes */},
+                  child: const Text('Ulangi Tes')),
             ],
           ),
         ),
@@ -290,7 +320,9 @@ class _HasilKenaliDiriPageState extends State<HasilKenaliDiriPage> {
                       ),
                     ),
                   ),
-                  IconButton(onPressed: ()=> Navigator.pop(context), icon: const Icon(Icons.close)),
+                  IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close)),
                 ],
               ),
               const SizedBox(height: 8),
@@ -315,7 +347,10 @@ class _BigCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: const [BoxShadow(color: Color(0x22000000), blurRadius: 10, offset: Offset(0, 3))],
+        boxShadow: const [
+          BoxShadow(
+              color: Color(0x22000000), blurRadius: 10, offset: Offset(0, 3))
+        ],
       ),
       child: child,
     );
@@ -375,7 +410,8 @@ class _RecommendationTile extends StatelessWidget {
             ),
             child: Text(
               priorityLabel,
-              style: const TextStyle(color: Color(0xFF2E6BFF), fontWeight: FontWeight.w900),
+              style: const TextStyle(
+                  color: Color(0xFF2E6BFF), fontWeight: FontWeight.w900),
             ),
           ),
           const SizedBox(height: 8),
@@ -427,7 +463,8 @@ class _LetterInfoCard extends StatelessWidget {
               onTap: onTapMore,
               child: const Text(
                 'Lihat Selengkapnya',
-                style: TextStyle(color: Color(0xFF2E6BFF), fontWeight: FontWeight.w900),
+                style: TextStyle(
+                    color: Color(0xFF2E6BFF), fontWeight: FontWeight.w900),
               ),
             ),
           ),

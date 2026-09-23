@@ -1,16 +1,42 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../auth/data/auth_service.dart';
 import 'profile_tab_view.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const HomePage({super.key, this.initialTab = 0});
+
+  final int initialTab;
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  int navIndex = 0;
+  late int navIndex = widget.initialTab;
+  String _userName = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMe();
+  }
+
+  Future<void> _loadMe() async {
+    try {
+      final res = await AuthService().me();
+      final data = res['data'];
+      if (data is Map<String, dynamic>) {
+        final personalInfo = data['personal_info'] as Map<String, dynamic>?;
+        final name = personalInfo?['username'] as String?;
+        if (name != null && name.isNotEmpty && mounted) {
+          setState(() => _userName = name);
+        }
+      }
+    } catch (_) {
+      // biarkan kosong, banner akan pakai fallback
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +71,7 @@ class _HomePageState extends State<HomePage> {
               children: [
                 // ===== TOP PROFILE BANNER =====
                 _ProfileBanner(
+                  name: _userName,
                   onTapCta: () => context.go('/kenali'),
                 ),
 
@@ -126,8 +153,9 @@ class _HomePageState extends State<HomePage> {
 
 /// ======= WIDGET: Banner profil paling atas =======
 class _ProfileBanner extends StatelessWidget {
-  const _ProfileBanner({required this.onTapCta});
+  const _ProfileBanner({required this.name, required this.onTapCta});
 
+  final String name;
   final VoidCallback onTapCta;
 
   @override
@@ -168,9 +196,9 @@ class _ProfileBanner extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Adhitya Pratama',
-                            style: TextStyle(
+                          Text(
+                            name.isNotEmpty ? name : 'Sobat Rextra',
+                            style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w800,
                               fontSize: 16,

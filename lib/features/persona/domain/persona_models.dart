@@ -23,6 +23,17 @@ class Mission {
     this.description = '',
     this.onTap,
   });
+
+  Mission copyWith({bool? done}) => Mission(
+        title: title,
+        iconAsset: iconAsset,
+        imageAsset: imageAsset,
+        point: point,
+        done: done ?? this.done,
+        isMandatory: isMandatory,
+        description: description,
+        onTap: onTap,
+      );
 }
 
 PersonaType resolvePersona({
