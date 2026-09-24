@@ -20,6 +20,95 @@ class ApiException implements Exception {
 class KenaliDiriRepository {
   final Dio _dio = ApiClient.dio;
 
+  // Saat backend siap, app sebaiknya tidak menutupi kegagalan backend dengan mock.
+  static const bool allowMockFallback = false;
+
+  static String resolveAssessmentPath(String endpoint) {
+    final normalized = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
+    if (normalized.startsWith('assessment/')) {
+      return '/$normalized';
+    }
+    if (normalized.startsWith('assesment/')) {
+      return '/${normalized.replaceFirst('assesment/', 'assessment/')}';
+    }
+    return '/assessment/$normalized';
+  }
+
+  static String resolveLegacyAssessmentPath(String endpoint) {
+    final normalized = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
+    if (normalized.startsWith('assesment/')) {
+      return '/$normalized';
+    }
+    if (normalized.startsWith('assessment/')) {
+      return '/${normalized.replaceFirst('assessment/', 'assesment/')}';
+    }
+    return '/assesment/$normalized';
+  }
+
+  static bool isSuccessfulAssessmentResponse(dynamic data) {
+    if (data is! Map) return false;
+
+    if (data['success'] is bool) {
+      return data['success'] == true;
+    }
+    if (data['valid'] is bool) {
+      return data['valid'] == true;
+    }
+    if (data['status'] is String) {
+      return data['status'].toString().toLowerCase() == 'success';
+    }
+    return data['data'] != null;
+  }
+
+  Future<Response<dynamic>> _requestAssessment(
+    String endpoint, {
+    required String method,
+    Object? data,
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    final paths = [
+      resolveAssessmentPath(endpoint),
+      resolveLegacyAssessmentPath(endpoint),
+    ].toSet().toList();
+
+    DioException? lastError;
+
+    for (int i = 0; i < paths.length; i++) {
+      try {
+        final res = await _dio.request(
+          paths[i],
+          data: data,
+          queryParameters: queryParameters,
+          options: Options(method: method),
+        );
+
+        if (res.statusCode != null && res.statusCode! >= 400) {
+          if (i == 0 && (res.statusCode == 404 || res.statusCode == 405)) {
+            continue;
+          }
+          return res;
+        }
+
+        return res;
+      } on DioException catch (e) {
+        lastError = e;
+        if (e.response?.statusCode == 404 && i == 0) {
+          continue;
+        }
+        rethrow;
+      }
+    }
+
+    if (lastError != null) {
+      throw lastError!;
+    }
+
+    throw DioException(
+      requestOptions: RequestOptions(path: paths.first, method: method),
+      error: 'Assessment endpoint unavailable',
+    );
+  }
+
   // --------------------------------------------------------------------------
   // VALIDASI
   // --------------------------------------------------------------------------
@@ -27,7 +116,12 @@ class KenaliDiriRepository {
     // CHEAT CODE BYPASS
     if (code == 'rextra123') return true;
 
-    final res = await _dio.post('/assesment/validate_hash', data: {'hash': code});
+    final res = await _requestAssessment(
+      '/validate_hash',
+      method: 'POST',
+      data: {'hash': code},
+    );
+
     if (res.data is Map) {
       final m = res.data as Map;
       return m['success'] == true || m['valid'] == true;
@@ -39,7 +133,43 @@ class KenaliDiriRepository {
   // RIASEC
   // --------------------------------------------------------------------------
   Future<List<RiasecQuestion>> getRiasecQuestions() async {
-    // DEVELOPMENT BYPASS: Load from mock since MONGODB_BACKEND is unavailable
+    try {
+      final res = await _requestAssessment(
+        '/test/riasec/question',
+        method: 'GET',
+      );
+
+      final body = res.data;
+      if (body is Map && body['data'] is List) {
+        final list = body['data'] as List;
+        if (list.isNotEmpty) {
+          final questions = list.map((e) => RiasecQuestion.fromJson(Map<String, dynamic>.from(e as Map))).toList();
+          const order = {'R': 0, 'I': 1, 'A': 2, 'S': 3, 'E': 4, 'C': 5};
+          int numOf(String id) {
+            final m = RegExp(r'(\d+)').firstMatch(id);
+            return int.tryParse(m?.group(1) ?? '0') ?? 0;
+          }
+
+          questions.sort((a, b) {
+            final pa = order[a.id[0].toUpperCase()] ?? 99;
+            final pb = order[b.id[0].toUpperCase()] ?? 99;
+            if (pa != pb) return pa.compareTo(pb);
+            return numOf(a.id).compareTo(numOf(b.id));
+          });
+
+          return questions;
+        }
+      }
+    } catch (_) {
+      if (!allowMockFallback) {
+        rethrow;
+      }
+    }
+
+    if (!allowMockFallback) {
+      throw Exception('Pertanyaan RIASEC tidak tersedia dari backend.');
+    }
+
     final List list = mockRiasecQuestions;
     final questions = list.map((e) => RiasecQuestion.fromJson(e)).toList();
 
@@ -64,15 +194,18 @@ class KenaliDiriRepository {
       if (kDebugMode) {
         print('SUBMIT RIASEC PAYLOAD (${answers.length}) => $answers');
       }
-      final res = await _dio.post(
-        '/assesment/test/riasec/submit',
+
+      final res = await _requestAssessment(
+        '/test/riasec/submit',
+        method: 'POST',
         data: {'answers': answers},
       );
-      if (res.data is Map && res.data['success'] == false) {
+
+      if (!isSuccessfulAssessmentResponse(res.data)) {
         throw DioException(
           requestOptions: res.requestOptions,
           response: res,
-          error: res.data,
+          error: res.data ?? 'Submit RIASEC gagal',
         );
       }
     } on DioException {
@@ -81,15 +214,24 @@ class KenaliDiriRepository {
   }
 
   Future<Map<String, dynamic>?> _getRiasecRawResult() async {
-    final res = await _dio.get('/assesment/test/riasec/result');
-    final data = res.data['data'];
+    final res = await _requestAssessment(
+      '/test/riasec/result',
+      method: 'GET',
+    );
+
+    dynamic data = res.data;
+    if (data is Map) {
+      data = data['data'];
+    }
 
     if (kDebugMode) debugPrint('RIASEC RESULT RAW => ${res.data}');
 
     if (data is List && data.isNotEmpty) {
-      return Map<String, dynamic>.from(data.last as Map);
+      final last = data.last;
+      if (last is Map) return Map<String, dynamic>.from(last);
     }
     if (data is Map<String, dynamic>) return data;
+    if (data is Map) return Map<String, dynamic>.from(data);
     return null;
   }
 
@@ -112,19 +254,27 @@ class KenaliDiriRepository {
   }
 
   Future<RiasecResult> getRiasecResult() async {
-    final res = await ApiClient.dio.get('/assesment/test/riasec/result');
-    if (res.statusCode == 200 && res.data['success'] == true) {
-      final list = res.data['data'] as List<dynamic>;
-      if (list.isEmpty) throw Exception('Belum ada hasil RIASEC');
+    final res = await _requestAssessment(
+      '/test/riasec/result',
+      method: 'GET',
+    );
 
-      // Ambil hasil terakhir (pastikan backend urut ASC atau DESC)
-      final latest = list.last; // kalau backend urut ASC
-      // final latest = list.first; // kalau backend urut DESC
-
-      return RiasecResult.fromJson(latest);
-    } else {
-      throw Exception('Gagal memuat hasil RIASEC');
+    final payload = res.data;
+    if (payload is Map) {
+      final data = payload['data'];
+      if (data is List && data.isNotEmpty) {
+        final latest = data.last;
+        if (latest is Map) return RiasecResult.fromJson(Map<String, dynamic>.from(latest));
+      }
+      if (data is Map) {
+        return RiasecResult.fromJson(Map<String, dynamic>.from(data));
+      }
+      if (payload['code'] != null || payload['summary'] != null || payload['letters'] != null) {
+        return RiasecResult.fromJson(Map<String, dynamic>.from(payload));
+      }
     }
+
+    throw Exception('Gagal memuat hasil RIASEC');
   }
 
   // --------------------------------------------------------------------------
@@ -135,9 +285,12 @@ class KenaliDiriRepository {
   Future<List<IkigaiQuestion>> getIkigaiQuestions() async {
     try {
       debugPrint('  MULAI GET IKIGAI QUESTIONS');
-      final res = await _dio.get('/assesment/test/ikigai/question');
+      final res = await _requestAssessment(
+        '/test/ikigai/question',
+        method: 'GET',
+      );
 
-      final raw = res.data['data'];
+      final raw = res.data is Map ? (res.data as Map)['data'] ?? res.data : res.data;
       debugPrint('  RESP KEYS: ${res.data is Map ? (res.data as Map).keys : res.data.runtimeType}');
       debugPrint('  DATA TYPE: ${raw.runtimeType}');
       try {
@@ -154,10 +307,10 @@ class KenaliDiriRepository {
           if (g is Map && g['instruction'] != null && g['options'] is List) {
             out.add(
               IkigaiQuestion(
-                id: i + 1, // 1..4
+                id: i + 1,
                 text: (g['instruction'] ?? '').toString(),
                 options: IkigaiQuestion.parseOptions(g['options']),
-                enableReason: true, // biarkan true agar UI bisa isi alasan bila kosong
+                enableReason: true,
               ),
             );
           }
@@ -166,7 +319,6 @@ class KenaliDiriRepository {
         return out;
       }
 
-      // fallback (bentuk lain)
       return [];
     } on DioException catch (e) {
       debugPrint('GET IKIGAI QUESTIONS ERROR => ${e.response?.data ?? e.message}');
@@ -181,7 +333,14 @@ class KenaliDiriRepository {
   Future<void> submitIkigaiSimple(Map<int, int> answers) async {
     try {
       final payload = answers.map((k, v) => MapEntry(k.toString(), v));
-      await _dio.post('/assesment/test/ikigai/submit', data: {'answers': payload});
+      final res = await _requestAssessment(
+        '/test/ikigai/submit',
+        method: 'POST',
+        data: {'answers': payload},
+      );
+      if (!isSuccessfulAssessmentResponse(res.data)) {
+        throw ApiException(_readErrorFromResponse(res.data), status: res.statusCode);
+      }
     } on DioException catch (e) {
       throw ApiException(_readError(e), status: e.response?.statusCode);
     } catch (e) {
@@ -202,7 +361,14 @@ class KenaliDiriRepository {
         'reason': reasons[e.key] ?? '',
       })
           .toList();
-      await _dio.post('/assesment/test/ikigai/submit', data: {'answers': payload});
+      final res = await _requestAssessment(
+        '/test/ikigai/submit',
+        method: 'POST',
+        data: {'answers': payload},
+      );
+      if (!isSuccessfulAssessmentResponse(res.data)) {
+        throw ApiException(_readErrorFromResponse(res.data), status: res.statusCode);
+      }
     } on DioException catch (e) {
       throw ApiException(_readError(e), status: e.response?.statusCode);
     } catch (e) {
@@ -213,10 +379,13 @@ class KenaliDiriRepository {
   /// Ambil hasil IKIGAI – normalisasi dari struktur Bruno
   Future<IkigaiResult> getIkigaiResult() async {
     try {
-      final res = await _dio.get('/assesment/test/ikigai/result');
+      final res = await _requestAssessment(
+        '/test/ikigai/result',
+        method: 'GET',
+      );
       debugPrint('IKIGAI RESULT RAW => ${res.data}');
 
-      dynamic data = res.data['data'];
+      dynamic data = res.data is Map ? (res.data as Map)['data'] : null;
       if (data is List && data.isNotEmpty) data = data.first;
       if (data is! Map) {
         if (res.data is Map) data = (res.data as Map)['data'] ?? res.data;
@@ -335,5 +504,14 @@ class KenaliDiriRepository {
       if (data['error'] != null) return data['error'].toString();
     }
     return e.message ?? 'Terjadi kesalahan jaringan';
+  }
+
+  String _readErrorFromResponse(dynamic data) {
+    if (data is Map) {
+      if (data['message'] != null) return data['message'].toString();
+      if (data['error'] != null) return data['error'].toString();
+      if (data['detail'] != null) return data['detail'].toString();
+    }
+    return 'Assessment request gagal';
   }
 }
