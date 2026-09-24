@@ -35,14 +35,35 @@ const _authOnlyPaths = <String>{
   '/register',
 };
 
+// Halaman yang boleh diakses tanpa login. Selain daftar ini dianggap
+// halaman yang butuh login (default-deny), supaya rute baru otomatis
+// terlindungi tanpa perlu didaftarkan manual satu-satu.
+const _publicPaths = <String>{
+  '/splash',
+  '/onboarding',
+  '/login',
+  '/register',
+  '/verify',
+  '/verifikasi-akun',
+  '/forgot',
+  '/forgot/sent',
+  '/forgot/expired',
+  '/forgot/new',
+  '/forgot/success',
+};
+
 final router = GoRouter(
   initialLocation: '/splash',
   redirect: (context, state) async {
     final token = await AppSecureStorage.readToken();
     final isLoggedIn = token != null && token.isNotEmpty;
+    final path = state.matchedLocation;
 
-    if (isLoggedIn && _authOnlyPaths.contains(state.matchedLocation)) {
+    if (isLoggedIn && _authOnlyPaths.contains(path)) {
       return '/home';
+    }
+    if (!isLoggedIn && !_publicPaths.contains(path)) {
+      return '/login';
     }
     return null;
   },

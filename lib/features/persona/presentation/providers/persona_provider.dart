@@ -73,7 +73,12 @@ class PersonaNotifier extends StateNotifier<PersonaState> {
   /// sebelumnya. Kalau ada, state & cache lokal langsung diisi (termasuk
   /// progres misi wajibnya) supaya asesmen tidak perlu diulang setelah
   /// login ulang.
+  ///
+  /// Kalau backend tidak bisa dihubungi (mis. offline), fallback ke cache
+  /// lokal di SharedPreferences supaya user yang sudah pernah dapat persona
+  /// tidak disuruh mengulang asesmen hanya karena sedang tidak ada koneksi.
   Future<PersonaStatus?> fetchExistingPersona() async {
+    final prefs = await SharedPreferences.getInstance();
     try {
       final status = await _repo.getPersona();
       if (status != null) {
@@ -83,13 +88,32 @@ class PersonaNotifier extends StateNotifier<PersonaState> {
           totalMissions: status.totalMissions,
           missionsCompleted: status.missionsCompleted,
         );
-        final prefs = await SharedPreferences.getInstance();
         await prefs.setString(_key, status.type.name);
       }
       return status;
     } catch (_) {
-      // Gagal cek ke server (mis. offline) -> anggap belum ada,
-      // biar user tetap bisa lanjut asesmen seperti biasa.
+      final cachedType = _typeFromName(prefs.getString(_key));
+      if (cachedType == null) return null;
+
+      state = state.copyWith(
+        finalPersona: cachedType,
+        completedMissions: 0,
+        totalMissions: missionLimitFor(cachedType),
+        missionsCompleted: const [],
+      );
+      return PersonaStatus(
+        type: cachedType,
+        completedMissions: 0,
+        totalMissions: missionLimitFor(cachedType),
+      );
+    }
+  }
+
+  PersonaType? _typeFromName(String? name) {
+    if (name == null) return null;
+    try {
+      return PersonaType.values.byName(name);
+    } catch (_) {
       return null;
     }
   }
