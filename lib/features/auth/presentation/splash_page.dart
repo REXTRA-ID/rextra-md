@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -8,15 +10,24 @@ class SplashPage extends StatefulWidget {
 }
 
 class _SplashPageState extends State<SplashPage> {
+  Timer? _splashTimer;
+
   @override
   void initState() {
     super.initState();
     // Pastikan navigasi dilakukan setelah frame pertama ter-render
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await Future.delayed(const Duration(milliseconds: 900));
-      if (!mounted) return;
-      context.go('/onboarding');
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _splashTimer = Timer(const Duration(milliseconds: 900), () {
+        if (!mounted) return;
+        context.go('/onboarding');
+      });
     });
+  }
+
+  @override
+  void dispose() {
+    _splashTimer?.cancel();
+    super.dispose();
   }
 
   @override
