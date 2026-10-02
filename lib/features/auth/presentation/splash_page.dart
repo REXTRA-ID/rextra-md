@@ -9,12 +9,21 @@ class SplashPage extends StatefulWidget {
   State<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends State<SplashPage> {
+class _SplashPageState extends State<SplashPage>
+    with SingleTickerProviderStateMixin {
   Timer? _splashTimer;
+  late final AnimationController _fillController;
 
   @override
   void initState() {
     super.initState();
+
+    // Animasi "isi" logo naik dari bawah ke atas, menandakan loading.
+    _fillController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    )..repeat(reverse: true);
+
     // Pastikan navigasi dilakukan setelah frame pertama ter-render
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _splashTimer = Timer(const Duration(milliseconds: 900), () {
@@ -27,6 +36,7 @@ class _SplashPageState extends State<SplashPage> {
   @override
   void dispose() {
     _splashTimer?.cancel();
+    _fillController.dispose();
     super.dispose();
   }
 
@@ -70,13 +80,42 @@ class _SplashPageState extends State<SplashPage> {
                 ),
               ),
             ),
-            // LOGO TANPA FRAME PUTIH
+            // LOGO (garis swirl saja, tanpa kartu putih & teks), dengan
+            // efek "isi naik dari bawah ke atas" menandakan loading.
             Center(
-              child: Image.asset(
-                'assets/images/logo.png',
-                width: 124,
-                height: 124,
-                fit: BoxFit.contain,
+              child: SizedBox(
+                width: 140,
+                height: 140,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // Siluet garis logo redup, selalu terlihat penuh
+                    Opacity(
+                      opacity: 0.28,
+                      child: Image.asset(
+                        'assets/images/logo_icon.png',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                    // Garis logo terang yang "naik" mengisi dari bawah ke atas
+                    AnimatedBuilder(
+                      animation: _fillController,
+                      builder: (context, child) {
+                        return ClipRect(
+                          child: Align(
+                            alignment: Alignment.bottomCenter,
+                            heightFactor: _fillController.value,
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: Image.asset(
+                        'assets/images/logo_icon.png',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

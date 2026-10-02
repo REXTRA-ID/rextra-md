@@ -114,7 +114,7 @@ class KenaliDiriRepository {
   // --------------------------------------------------------------------------
   Future<bool> validateHash(String code) async {
     // CHEAT CODE BYPASS
-    if (code == 'rextra123') return true;
+    if (code == 'REXTRAMANTAP') return true;
 
     final res = await _requestAssessment(
       '/validate_hash',

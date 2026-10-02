@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:ui' show PointerDeviceKind;
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,7 +27,15 @@ final authBootstrapProvider = FutureProvider<bool>((ref) async {
 void main() {
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
-    
+
+    // Debug/dev run (flutter run) selalu mulai dari splash -> login, tidak
+    // ikut sesi login yang tersimpan di browser dari testing sebelumnya.
+    // Tidak berlaku di build release (production), supaya user beneran
+    // tetap login lintas sesi seperti seharusnya.
+    if (kDebugMode) {
+      await AppSecureStorage.deleteToken();
+    }
+
     ApiClient.enableDebugSSLBypass();
     if (kIsWeb) setUrlStrategy(PathUrlStrategy());
 

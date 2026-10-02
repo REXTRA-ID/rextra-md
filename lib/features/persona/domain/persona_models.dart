@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 enum PersonaType { pathfinder, builder, achiever }
 
@@ -34,15 +33,4 @@ class Mission {
         description: description,
         onTap: onTap,
       );
-}
-
-PersonaType resolvePersona({
-  required bool tujuan,
-  required bool porto,
-  required bool rekrut,
-}) {
-  if (!tujuan) return PersonaType.pathfinder;
-  if (!porto) return PersonaType.builder;
-  if (!rekrut) return PersonaType.builder;
-  return PersonaType.achiever;
 }

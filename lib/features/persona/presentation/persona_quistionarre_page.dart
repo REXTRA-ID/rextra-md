@@ -50,7 +50,6 @@ class _PersonaQuestionnairePageState
         return;
       }
       // ELSE (Q1 == "Iya") -> Lanjut Q2
-      notifier.setTujuan(true);
       _pageController.nextPage(
           duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
     } else if (_currentPage == 1) {

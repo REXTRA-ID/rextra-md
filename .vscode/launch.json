@@ -10,6 +10,14 @@
             "name": "Launch Chrome against localhost",
             "url": "http://localhost:8080",
             "webRoot": "${workspaceFolder}"
+        },
+        {
+            "type": "dart",
+            "request": "launch",
+            "name": "Flutter Web (localhost:5000)",
+            "program": "lib/main.dart",
+            "deviceId": "chrome",
+            "args": ["--web-port", "5000"]
         }
     ]
 }
