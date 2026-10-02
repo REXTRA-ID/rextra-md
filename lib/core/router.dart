@@ -55,8 +55,10 @@ const _publicPaths = <String>{
 final router = GoRouter(
   initialLocation: '/splash',
   redirect: (context, state) async {
-    final token = await AppSecureStorage.readToken();
-    final isLoggedIn = token != null && token.isNotEmpty;
+    // Sesi otomatis dianggap habis setelah 1 jam sejak login (lihat
+    // AppSecureStorage.sessionDuration), terlepas dari token backend
+    // masih berlaku atau tidak.
+    final isLoggedIn = await AppSecureStorage.hasValidSession();
     final path = state.matchedLocation;
 
     if (isLoggedIn && _authOnlyPaths.contains(path)) {
@@ -90,25 +92,36 @@ final router = GoRouter(
     ),
 
     // --- Forgot password flow ---
-    GoRoute(path: '/forgot', builder: (_, __) => const ForgotPasswordRequestPage()),
+    GoRoute(
+        path: '/forgot', builder: (_, __) => const ForgotPasswordRequestPage()),
     GoRoute(
       path: '/forgot/sent',
-      builder: (_, s) => ForgotPasswordSentPage(email: s.uri.queryParameters['email'] ?? ''),
+      builder: (_, s) =>
+          ForgotPasswordSentPage(email: s.uri.queryParameters['email'] ?? ''),
     ),
     GoRoute(
       path: '/forgot/expired',
-      builder: (_, s) => ForgotPasswordExpiredPage(email: s.uri.queryParameters['email'] ?? ''),
+      builder: (_, s) => ForgotPasswordExpiredPage(
+          email: s.uri.queryParameters['email'] ?? ''),
     ),
     GoRoute(
       path: '/forgot/new',
-      builder: (_, s) => NewPasswordPage(token: s.uri.queryParameters['token'] ?? ''),
+      builder: (_, s) =>
+          NewPasswordPage(token: s.uri.queryParameters['token'] ?? ''),
     ),
-    GoRoute(path: '/forgot/success', builder: (_, __) => const PasswordResetSuccessPage()),
+    GoRoute(
+        path: '/forgot/success',
+        builder: (_, __) => const PasswordResetSuccessPage()),
 
     // --- Persona (Flow 2) ---
-    GoRoute(path: '/persona/welcome', builder: (_, __) => const PersonaWelcomePage()),
-    GoRoute(path: '/persona/info', builder:  (_, __) => const PersonaInfoDetailPage()),
-    GoRoute(path: '/persona/intro', builder:  (_, __) => const PersonaIntroPage()),
+    GoRoute(
+        path: '/persona/welcome',
+        builder: (_, __) => const PersonaWelcomePage()),
+    GoRoute(
+        path: '/persona/info',
+        builder: (_, __) => const PersonaInfoDetailPage()),
+    GoRoute(
+        path: '/persona/intro', builder: (_, __) => const PersonaIntroPage()),
     // GoRoute(
     //   path: '/persona/step1',
     //   builder: (_, __) => const PersonaStepPage(
@@ -180,11 +193,23 @@ final router = GoRouter(
 
     // --- Kenali Diri
     GoRoute(path: '/kenali', builder: (_, __) => const KenaliDiriInfoPage()),
-    GoRoute(path: '/kenali/riasec-intro', builder: (_, __) => const RiasecIntroPage()),
-    GoRoute(path: '/kenali/ikigai-intro', builder:  (_, __) => const IkigaiIntroPage()),
-    GoRoute(path: '/kenali/riasec-test', builder: (_, __) => const RiasecTestPage()),
-    GoRoute(path: '/kenali/ikigai-test', builder:  (_, __) => const IkigaiTestPage()),
-    GoRoute(path: '/kenali/result', builder: (_, __) => const HasilKenaliDiriPage()),
-    GoRoute(path: '/kenali/history', builder: (_, __) => const KenaliDiriHistoryPage()),
+    GoRoute(
+        path: '/kenali/riasec-intro',
+        builder: (_, __) => const RiasecIntroPage()),
+    GoRoute(
+        path: '/kenali/ikigai-intro',
+        builder: (_, __) => const IkigaiIntroPage()),
+    GoRoute(
+        path: '/kenali/riasec-test',
+        builder: (_, __) => const RiasecTestPage()),
+    GoRoute(
+        path: '/kenali/ikigai-test',
+        builder: (_, __) => const IkigaiTestPage()),
+    GoRoute(
+        path: '/kenali/result',
+        builder: (_, __) => const HasilKenaliDiriPage()),
+    GoRoute(
+        path: '/kenali/history',
+        builder: (_, __) => const KenaliDiriHistoryPage()),
   ],
 );
