@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -66,7 +67,7 @@ class _KenaliDiriInfoPageState extends State<KenaliDiriInfoPage> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          onPressed: () => _safeBack(context, fallback: '/persona/result'),
+          onPressed: () => _safeBack(context, fallback: '/kenali'),
           icon: const Icon(Icons.arrow_back_ios_new),
         ),
         title: Image.asset('assets/images/rextra.png', height: 22),
@@ -164,7 +165,10 @@ class _KenaliDiriInfoPageState extends State<KenaliDiriInfoPage> {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
           child: GestureDetector(
-            onLongPress: () => context.go('/kenali/riasec-intro'), // dev shortcut
+            // Dev shortcut lewati kode akses — hanya di debug.
+            onLongPress: kDebugMode
+                ? () => context.go('/kenali/riasec-intro')
+                : null,
             child: ElevatedButton(
               onPressed: () async {
                 final ok = await showModalBottomSheet<bool>(

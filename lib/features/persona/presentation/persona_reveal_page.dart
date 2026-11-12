@@ -120,9 +120,15 @@ class _PersonaRevealPageState extends ConsumerState<PersonaRevealPage>
             ),
 
             // 2. LAYER KARTU ANIMASI
+            // minHeight = tinggi layar supaya kartu benar-benar di tengah
+            // vertikal (Column di dalam scroll view tidak bisa center sendiri).
             SafeArea(
-              child: SingleChildScrollView(
-                child: Column(
+              child: LayoutBuilder(
+                builder: (context, constraints) => SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints:
+                        BoxConstraints(minHeight: constraints.maxHeight),
+                    child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     // Animasi Muncul dari Bawah (Slide)
@@ -168,8 +174,6 @@ class _PersonaRevealPageState extends ConsumerState<PersonaRevealPage>
                       ),
                     ),
 
-                    SizedBox(height: 32.h),
-
                     // 3. LAYER TOMBOL LANJUTKAN (Akan muncul setelah animasi flip selesai)
                     // AnimatedOpacity(
                     //   opacity: _isFlipped ? 1.0 : 0.0,
@@ -186,6 +190,8 @@ class _PersonaRevealPageState extends ConsumerState<PersonaRevealPage>
                     //   ),
                     // ),
                   ],
+                    ),
+                  ),
                 ),
               ),
             ),

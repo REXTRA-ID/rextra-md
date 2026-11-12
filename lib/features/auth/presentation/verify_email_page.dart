@@ -98,8 +98,14 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
             children: [
               const SizedBox(height: 10),
 
+              // Scroll kalau layar pendek supaya teks tidak menumpuk tombol.
               Expanded(
-                child: Column(
+                child: LayoutBuilder(
+                  builder: (context, constraints) => SingleChildScrollView(
+                    child: ConstrainedBox(
+                      constraints:
+                          BoxConstraints(minHeight: constraints.maxHeight),
+                      child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Image.asset(
@@ -126,8 +132,12 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
                       ),
                     ),
                   ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
+              const SizedBox(height: 16),
 
               if (!isExpired) ...[
                 const Text(

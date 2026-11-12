@@ -9,14 +9,14 @@ class PersonaState {
   final int completedMissions;
   final int totalMissions;
 
-  /// Status selesai/belum tiap misi, terurut (index 0 = misi pertama).
-  final List<bool> missionsCompleted;
+  /// Status selesai tiap misi berdasarkan key backend.
+  final Map<String, bool> missionStatus;
 
   PersonaState({
     this.finalPersona,
     this.completedMissions = 0,
     this.totalMissions = 0,
-    this.missionsCompleted = const [],
+    this.missionStatus = const {},
   });
 
   /// Apakah semua misi wajib persona ini sudah diselesaikan.
@@ -27,27 +27,14 @@ class PersonaState {
     PersonaType? finalPersona,
     int? completedMissions,
     int? totalMissions,
-    List<bool>? missionsCompleted,
+    Map<String, bool>? missionStatus,
   }) {
     return PersonaState(
       finalPersona: finalPersona ?? this.finalPersona,
       completedMissions: completedMissions ?? this.completedMissions,
       totalMissions: totalMissions ?? this.totalMissions,
-      missionsCompleted: missionsCompleted ?? this.missionsCompleted,
+      missionStatus: missionStatus ?? this.missionStatus,
     );
-  }
-}
-
-/// Jumlah misi wajib per tipe persona, sesuai konstanta di backend
-/// (missionLimitPathfinder/Builder/Achiever).
-int missionLimitFor(PersonaType type) {
-  switch (type) {
-    case PersonaType.pathfinder:
-      return 4;
-    case PersonaType.builder:
-      return 7;
-    case PersonaType.achiever:
-      return 9;
   }
 }
 
@@ -74,7 +61,7 @@ class PersonaNotifier extends StateNotifier<PersonaState> {
           finalPersona: status.type,
           completedMissions: status.completedMissions,
           totalMissions: status.totalMissions,
-          missionsCompleted: status.missionsCompleted,
+          missionStatus: status.missionStatus,
         );
         await prefs.setString(_key, status.type.name);
       }
@@ -86,13 +73,13 @@ class PersonaNotifier extends StateNotifier<PersonaState> {
       state = state.copyWith(
         finalPersona: cachedType,
         completedMissions: 0,
-        totalMissions: missionLimitFor(cachedType),
-        missionsCompleted: const [],
+        totalMissions: missionsFor(cachedType).length,
+        missionStatus: const {},
       );
       return PersonaStatus(
         type: cachedType,
         completedMissions: 0,
-        totalMissions: missionLimitFor(cachedType),
+        totalMissions: missionsFor(cachedType).length,
       );
     }
   }
@@ -111,7 +98,7 @@ class PersonaNotifier extends StateNotifier<PersonaState> {
     state = state.copyWith(
       finalPersona: type,
       completedMissions: 0,
-      totalMissions: missionLimitFor(type),
+      totalMissions: missionsFor(type).length,
     );
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_key, type.name);

@@ -60,7 +60,8 @@ class HistoryItem {
 class KenaliDiriState {
   final PersonaType personaType;
   final MembershipTier membershipTier;
-  final int tokenOwned;
+  /// null = belum diketahui (backend belum punya endpoint token).
+  final int? tokenOwned;
   final KenaliLockState lockState;
   final String personaName;
   final List<AssessmentItem> assessments;
@@ -107,8 +108,10 @@ class KenaliDiriController extends StateNotifier<KenaliDiriState> {
       : super(
     KenaliDiriState(
       personaType: PersonaType.pathfinder,
-      membershipTier: MembershipTier.pro,
-      tokenOwned: 600,
+      // Backend belum punya endpoint membership/token -> jangan tampilkan
+      // data palsu. Akses tes tetap dijaga kode akses (voucher).
+      membershipTier: MembershipTier.basic,
+      tokenOwned: null,
       lockState: KenaliLockState.none,
       personaName: 'Pathfinder',
       assessments: const [
@@ -177,7 +180,10 @@ class KenaliDiriController extends StateNotifier<KenaliDiriState> {
     state = state.copyWith(personaType: type, personaName: personaName);
   }
 
-  bool hasEnoughToken(int needed) => state.tokenOwned >= needed;
+  bool hasEnoughToken(int needed) {
+    final owned = state.tokenOwned;
+    return owned == null || owned >= needed;
+  }
 }
 
 extension AssessmentBadgeTypeX on AssessmentBadgeType {

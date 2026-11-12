@@ -49,7 +49,7 @@ class KenaliDiriHomePage extends ConsumerWidget {
 
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _MembershipCard(
+              child: MembershipStatusCard(
                 isPro: state.membershipTier == MembershipTier.pro,
                 tokenOwned: state.tokenOwned,
               ),
@@ -61,12 +61,15 @@ class KenaliDiriHomePage extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  const Text(
-                    'Asesmen Karier',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF111827),
+                  const Flexible(
+                    child: Text(
+                      'Asesmen Karier',
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF111827),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -111,7 +114,14 @@ class KenaliDiriHomePage extends ConsumerWidget {
                       _showTokenNotEnoughSheet(context, e.tokenCost);
                       return;
                     }
-                    // TODO: route ke flow tes
+                    if (e.category == AssessmentCategory.profilKarier) {
+                      // Info tes + kode akses (paywall) -> RIASEC.
+                      context.push('/kenali/info');
+                      return;
+                    }
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Tes ini segera hadir.')),
+                    );
                   },
                 ),
               ),
@@ -155,7 +165,7 @@ class KenaliDiriHomePage extends ConsumerWidget {
       centerTitle: true,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back_ios_new),
-        onPressed: () => popOrGo(context, '/home'),
+        onPressed: () => popOrGo(context, '/persona/result'),
       ),
       title: const Text(
         'KENALI DIRI',
@@ -192,11 +202,12 @@ class KenaliDiriHomePage extends ConsumerWidget {
   }
 }
 
-class _MembershipCard extends StatelessWidget {
+class MembershipStatusCard extends StatelessWidget {
   final bool isPro;
-  final int tokenOwned;
+  final int? tokenOwned;
 
-  const _MembershipCard({
+  const MembershipStatusCard({
+    super.key,
     required this.isPro,
     required this.tokenOwned,
   });
@@ -283,7 +294,7 @@ class _MembershipCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      '$tokenOwned',
+                      tokenOwned?.toString() ?? '-',
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
@@ -441,7 +452,7 @@ class _PersonaLockedPage extends StatelessWidget {
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new),
-          onPressed: () => popOrGo(context, '/home'),
+          onPressed: () => popOrGo(context, '/persona/result'),
         ),
         title: const Text(
           'KENALI DIRI',
@@ -572,7 +583,7 @@ class _PersonaLockedPage extends StatelessWidget {
 
 class _MembershipLockedPage extends StatelessWidget {
   final MembershipTier membershipTier;
-  final int tokenOwned;
+  final int? tokenOwned;
 
   const _MembershipLockedPage({
     required this.membershipTier,
@@ -590,7 +601,7 @@ class _MembershipLockedPage extends StatelessWidget {
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new),
-          onPressed: () => popOrGo(context, '/home'),
+          onPressed: () => popOrGo(context, '/persona/result'),
         ),
         title: const Text(
           'KENALI DIRI',
@@ -630,7 +641,7 @@ class _MembershipLockedPage extends StatelessWidget {
                 style: TextStyle(fontSize: 16, height: 1.5),
               ),
               const SizedBox(height: 18),
-              _MembershipCard(
+              MembershipStatusCard(
                 isPro: membershipTier == MembershipTier.pro,
                 tokenOwned: tokenOwned,
               ),

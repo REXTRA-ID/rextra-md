@@ -26,15 +26,15 @@ class AppColors {
   static const Color secondary900 = Color(0xFF072C2D);
 
   // ================= BLACK =================
-  static const Color black100 = Color(0xFF000000);
+  static const Color black100 = Color(0xFFD3D4D4);
   static const Color black200 = Color(0xFF000000);
-  static const Color black300 = Color(0xFF000000);
+  static const Color black300 = Color(0xFF6B6F70);
   static const Color black400 = Color(0xFF000000);
-  static const Color black500 = Color(0xFF000000);
-  static const Color black600 = Color(0xFF000000);
+  static const Color black500 = Color(0xFF464B4D);
+  static const Color black600 = Color(0xFF212729);
   static const Color black700 = Color(0xFF000000);
   static const Color black800 = Color(0xFF000000);
-  static const Color black900 = Color(0xFF000000);
+  static const Color black900 = Color(0xFF111415);
   static const Color CACACA = Color(0xFFCACACA);
 
   // ================= RED =================
@@ -42,7 +42,7 @@ class AppColors {
   static const Color red200 = Color(0xFF000000);
   static const Color red300 = Color(0xFF000000);
   static const Color red400 = Color(0xFF000000);
-  static const Color red500 = Color(0xFF000000);
+  static const Color red500 = Color(0xFFE24A4A);
   static const Color red600 = Color(0xFF000000);
   static const Color red700 = Color(0xFF000000);
   static const Color red800 = Color(0xFF000000);
@@ -54,7 +54,7 @@ class AppColors {
   static const Color green300 = Color(0xFF000000);
   static const Color green400 = Color(0xFF000000);
   static const Color green500 = Color(0xFF000000);
-  static const Color green600 = Color(0xFF000000);
+  static const Color green600 = Color(0xFF16A34A);
   static const Color green700 = Color(0xFF000000);
   static const Color green800 = Color(0xFF000000);
   static const Color green900 = Color(0xFF000000);

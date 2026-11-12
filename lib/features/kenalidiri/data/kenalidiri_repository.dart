@@ -113,8 +113,8 @@ class KenaliDiriRepository {
   // VALIDASI
   // --------------------------------------------------------------------------
   Future<bool> validateHash(String code) async {
-    // CHEAT CODE BYPASS
-    if (code == 'REXTRAMANTAP') return true;
+    // CHEAT CODE BYPASS — hanya untuk debug, tidak ikut ke build release.
+    if (kDebugMode && code == 'REXTRAMANTAP') return true;
 
     final res = await _requestAssessment(
       '/validate_hash',

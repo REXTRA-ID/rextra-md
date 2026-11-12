@@ -34,7 +34,7 @@ class AuthService {
         options: Options(validateStatus: (s) => s != null && s < 600),
       );
 
-      if ((res.statusCode ?? 0) >= 400) {
+      if ((res.statusCode ?? 0) >= 400 || (res.data is Map && res.data['success'] == false)) {
         throw Exception(_serverMessage(res.data) ?? 'Registrasi gagal (HTTP ${res.statusCode})');
       }
 
@@ -61,7 +61,7 @@ class AuthService {
         ),
       );
 
-      if ((res.statusCode ?? 0) >= 400) {
+      if ((res.statusCode ?? 0) >= 400 || (res.data is Map && res.data['success'] == false)) {
         throw Exception(_serverMessage(res.data) ?? 'Login gagal (HTTP ${res.statusCode})');
       }
 
@@ -102,7 +102,7 @@ class AuthService {
       'id_token': firebaseIdToken,
     }, options: Options(validateStatus: (s) => s != null && s < 600));
 
-    if ((res.statusCode ?? 0) >= 400) {
+    if ((res.statusCode ?? 0) >= 400 || (res.data is Map && res.data['success'] == false)) {
       throw Exception(_serverMessage(res.data) ?? 'Login Google gagal (HTTP ${res.statusCode})');
     }
 
@@ -142,7 +142,7 @@ class AuthService {
       queryParameters: {'token': token},
       options: Options(validateStatus: (s) => s != null && s < 600),
     );
-    if ((res.statusCode ?? 0) >= 400) {
+    if ((res.statusCode ?? 0) >= 400 || (res.data is Map && res.data['success'] == false)) {
       throw Exception(_serverMessage(res.data) ?? 'Verifikasi gagal (HTTP ${res.statusCode})');
     }
     return _serverMessage(res.data) ?? res.data.toString();
@@ -155,7 +155,7 @@ class AuthService {
         options: Options(validateStatus: (s) => s != null && s < 600),
       );
 
-      if ((res.statusCode ?? 0) >= 400) {
+      if ((res.statusCode ?? 0) >= 400 || (res.data is Map && res.data['success'] == false)) {
         throw Exception(_serverMessage(res.data) ?? 'Gagal mengirim ulang verifikasi (HTTP ${res.statusCode})');
       }
 
@@ -234,10 +234,24 @@ class AuthService {
     return null;
   }
 
+  String _friendlyError(String err) {
+    switch (err) {
+      case 'email already exist':
+        return 'Email sudah terdaftar. Silakan masuk dengan email ini.';
+      case 'Your account is not verified':
+        return 'Akun belum diverifikasi. Cek email verifikasi kamu.';
+      default:
+        return err;
+    }
+  }
+
   String? _serverMessage(dynamic data) {
     if (data is Map) {
+      // Saat gagal, backend kirim judul umum di `message` ("failed register
+      // account") dan alasan sebenarnya di `error` -> utamakan `error`.
+      final err = data['error'];
+      if (err is String && err.isNotEmpty) return _friendlyError(err);
       if (data['message'] is String) return data['message'] as String;
-      if (data['error'] is String && (data['error'] as String).isNotEmpty) return data['error'] as String;
     } else if (data is String && data.isNotEmpty) {
       return data;
     }
