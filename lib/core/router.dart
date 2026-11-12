@@ -22,9 +22,16 @@ import 'package:rextra_app/features/home/presentation/home_page.dart';
 // PERSONA (Flow 2)
 
 // KENALI DIRI
+import '../features/kenalidiri/presentation/kenalidiri_home_page.dart';
 import '../features/kenalidiri/presentation/kenalidiri_pages.dart';
 import '../features/kenalidiri/presentation/hasil_kenalidiri_page.dart';
 import '../features/kenalidiri/presentation/kenalidiri_history_page.dart';
+
+// JEJAK STUDI
+import '../features/jejakstudi/presentation/education_detail_page.dart';
+import '../features/jejakstudi/presentation/education_form_pages.dart';
+import '../features/jejakstudi/presentation/jejak_studi_home_page.dart';
+import '../features/jejakstudi/presentation/jejak_studi_success_page.dart';
 
 // Halaman yang tidak boleh diakses lagi kalau sesi login masih aktif —
 // mencegah user "kembali" ke sini lewat tombol back browser setelah login.
@@ -192,7 +199,9 @@ final router = GoRouter(
     ),
 
     // --- Kenali Diri
-    GoRoute(path: '/kenali', builder: (_, __) => const KenaliDiriInfoPage()),
+    GoRoute(path: '/kenali', builder: (_, __) => const KenaliDiriHomePage()),
+    GoRoute(
+        path: '/kenali/info', builder: (_, __) => const KenaliDiriInfoPage()),
     GoRoute(
         path: '/kenali/riasec-intro',
         builder: (_, __) => const RiasecIntroPage()),
@@ -211,5 +220,33 @@ final router = GoRouter(
     GoRoute(
         path: '/kenali/history',
         builder: (_, __) => const KenaliDiriHistoryPage()),
+
+    // --- Jejak Studi (Figma TF4)
+    GoRoute(
+        path: '/jejak-studi', builder: (_, __) => const JejakStudiHomePage()),
+    GoRoute(
+      path: '/jejak-studi/ditempuh',
+      builder: (_, s) =>
+          OngoingEducationFormPage(editId: s.uri.queryParameters['id']),
+    ),
+    GoRoute(
+      path: '/jejak-studi/selesai',
+      builder: (_, s) => CompletedEducationFormPage(
+        editId: s.uri.queryParameters['id'],
+        fromOngoingId: s.uri.queryParameters['dari'],
+      ),
+    ),
+    GoRoute(
+      path: '/jejak-studi/detail/:id',
+      builder: (_, s) => EducationDetailPage(id: s.pathParameters['id']!),
+    ),
+    GoRoute(
+        path: '/jejak-studi/riwayat',
+        builder: (_, __) => const EducationHistoryPage()),
+    GoRoute(
+      path: '/jejak-studi/berhasil',
+      builder: (_, s) => JejakStudiSuccessPage(
+          deleted: s.uri.queryParameters['aksi'] == 'hapus'),
+    ),
   ],
 );

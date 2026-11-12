@@ -10,15 +10,14 @@ class PersonaStatus {
   final int completedMissions;
   final int totalMissions;
 
-  /// Status selesai/belum tiap misi, terurut sesuai `order` dari backend
-  /// (index 0 = misi pertama, dst).
-  final List<bool> missionsCompleted;
+  /// Status selesai tiap misi berdasarkan `key` dari backend.
+  final Map<String, bool> missionStatus;
 
   const PersonaStatus({
     required this.type,
     required this.completedMissions,
     required this.totalMissions,
-    this.missionsCompleted = const [],
+    this.missionStatus = const {},
   });
 
   bool get isComplete =>
@@ -43,32 +42,24 @@ class PersonaRepository {
     final type = _parseType(data['persona_type'] as String?);
     if (type == null) return null;
 
-    final progress = data['progress'];
-    final completed = progress is Map
-        ? (progress['completed_missions'] as num?)?.toInt() ?? 0
-        : 0;
-    final total = progress is Map
-        ? (progress['total_missions'] as num?)?.toInt() ?? 0
-        : 0;
-
+    final missionStatus = <String, bool>{};
     final missionsRaw = data['missions'];
-    var missionsCompleted = <bool>[];
     if (missionsRaw is List) {
-      final sorted = List.of(missionsRaw)
-        ..sort((a, b) {
-          final orderA = (a is Map ? a['order'] as num? : null) ?? 0;
-          final orderB = (b is Map ? b['order'] as num? : null) ?? 0;
-          return orderA.compareTo(orderB);
-        });
-      missionsCompleted =
-          sorted.map((m) => m is Map && m['is_completed'] == true).toList();
+      for (final m in missionsRaw) {
+        if (m is Map && m['key'] is String) {
+          missionStatus[m['key'] as String] = m['is_completed'] == true;
+        }
+      }
     }
 
+    // Daftar misi per persona mengikuti Figma (bisa beda jumlah dengan
+    // backend), jadi progres dihitung dari daftar itu, bukan dari
+    // `progress` backend.
     return PersonaStatus(
       type: type,
-      completedMissions: completed,
-      totalMissions: total,
-      missionsCompleted: missionsCompleted,
+      completedMissions: completedMissionCount(type, missionStatus),
+      totalMissions: missionsFor(type).length,
+      missionStatus: missionStatus,
     );
   }
 
